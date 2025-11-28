@@ -141,27 +141,27 @@ public class LoginGUI extends JFrame {
             switch (role) {
                 case "Customer":
                     // Open Customer GUI
-                    // new CustomerGUI(username).setVisible(true);
+                    new CustomerGUI(username).setVisible(true);
                     System.out.println("Opening Customer interface for: " + username);
                     break;
                 case "Flight Agent":
                     // Open Flight Agent GUI
-                    // new FlightAgentGUI(username).setVisible(true);
+                    new FlightAgentGUI(username).setVisible(true);
                     System.out.println("Opening Flight Agent interface for: " + username);
                     break;
                 case "System Administrator":
                     // Open Admin GUI
-                    // new AdminGUI(username).setVisible(true);
+                    new AdminGUI(username).setVisible(true);
                     System.out.println("Opening System Administrator interface for: " + username);
                     break;
             }
             
-            // For now, just show a message
-            JOptionPane.showMessageDialog(null,
-                role + " Dashboard would open here for user: " + username + "\n" +
-                "Implementation of main application windows is pending.",
-                "Application Launch",
-                JOptionPane.INFORMATION_MESSAGE);
+            // // For now, just show a message
+            // JOptionPane.showMessageDialog(null,
+            //     role + " Dashboard would open here for user: " + username + "\n" +
+            //     "Implementation of main application windows is pending.",
+            //     "Application Launch",
+            //     JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
