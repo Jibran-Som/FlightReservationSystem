@@ -1,13 +1,18 @@
 package gui;
-
-import javax.swing.*;
+import backend.*;
+import model.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
+
 
 public class AdminGUI extends JFrame {
     private String currentUser;
     private JTabbedPane tabbedPane;
+    private DefaultTableModel flightTableModel;
 
     // Flight Management Components
     private JTable flightTable;
@@ -27,8 +32,12 @@ public class AdminGUI extends JFrame {
     private JButton generateReportButton;
     private JButton viewPromotionsButton;
 
+    // Database Manager For Connectivity
+    private DatabaseManager db = DatabaseManager.getInstance();
+
     public AdminGUI(String username) {
         this.currentUser = username;
+        db.connect("admin_user", "admin_password");
         initializeGUI();
     }
 
@@ -95,9 +104,10 @@ public class AdminGUI extends JFrame {
         panel.add(buttonPanel, BorderLayout.NORTH);
 
         // Flight table
-        String[] columnNames = {"Flight ID", "Flight Number", "Airline", "Departure", "Destination", "Date", "Time", "Capacity", "Price", "Status"};
-        Object[][] data = {}; // Empty for now
-        flightTable = new JTable(data, columnNames);
+        String[] columnNames = {"Flight ID", "Airplane ID", "Route ID", "Departure Date", "Arrival Date", "Available Seats", "Flight Length (HH:MM)", "Price"};
+        Object[][] data = db.getAllFlights();
+        flightTableModel = new DefaultTableModel(data, columnNames);
+        flightTable = new JTable(flightTableModel);
         JScrollPane scrollPane = new JScrollPane(flightTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
@@ -177,42 +187,127 @@ public class AdminGUI extends JFrame {
     private class AddFlightListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Add Flight functionality will be implemented later.",
-                "Add Flight",
-                JOptionPane.INFORMATION_MESSAGE);
+            AddFlightDialog dialog = new AddFlightDialog(AdminGUI.this, flightTableModel);
+            dialog.setVisible(true);
         }
     }
 
     private class EditFlightListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Edit Flight functionality will be implemented later.",
-                "Edit Flight",
-                JOptionPane.INFORMATION_MESSAGE);
+            int selectedRow = flightTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Please select a flight to edit.",
+                        "No Selection",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Pass selected row data to the dialog
+            Object flightID = flightTableModel.getValueAt(selectedRow, 0);
+            Object airplaneID = flightTableModel.getValueAt(selectedRow, 1);
+            Object routeID = flightTableModel.getValueAt(selectedRow, 2);
+            Object departureDate = flightTableModel.getValueAt(selectedRow, 3);
+            Object arrivalDate = flightTableModel.getValueAt(selectedRow, 4);
+            Object seatsAvailable = flightTableModel.getValueAt(selectedRow, 5);
+            Object flightTime = flightTableModel.getValueAt(selectedRow, 6);
+            Object price = flightTableModel.getValueAt(selectedRow, 7);
+
+            EditFlightDialog editDialog = new EditFlightDialog(
+                    AdminGUI.this,
+                    flightTableModel,
+                    selectedRow,
+                    flightID,
+                    airplaneID,
+                    routeID,
+                    departureDate,
+                    arrivalDate,
+                    seatsAvailable,
+                    flightTime,
+                    price
+            );
+
+            editDialog.setVisible(true);
         }
     }
 
+
     private class RemoveFlightListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+        try {
+            int selectedRow = flightTable.getSelectedRow();
+
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Please select a flight to remove.",
+                        "No Selection",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(AdminGUI.this,
+                    "Are you sure you want to delete this flight?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            int flightID = (int) flightTableModel.getValueAt(selectedRow, 0);
+
+            int result = db.deleteFlight(flightID); 
+
+            if (result >= 1) {
+                flightTableModel.removeRow(selectedRow);
+
+                systemLogArea.append("Deleted flight ID " + flightID +
+                        " at " + java.time.LocalDateTime.now() + "\n");
+
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Flight deleted successfully.",
+                        "Flight Removed",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+            } else if (result == 0) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "No flight was deleted. It may not exist.",
+                        "Delete Failed",
+                        JOptionPane.WARNING_MESSAGE);
+
+            } else {  // result == -1
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "A database error occurred while deleting the flight.",
+                        "SQL Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
             JOptionPane.showMessageDialog(AdminGUI.this,
-                "Remove Flight functionality will be implemented later.",
-                "Remove Flight",
-                JOptionPane.INFORMATION_MESSAGE);
+                    "An unexpected error occurred while trying to delete the flight.\n" +
+                    "Check console/logs for more details.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
+}
+
+
 
     private class RefreshFlightsListener implements ActionListener {
         @Override
-        public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) {
+            flightTableModel.setRowCount(0);
+
+            Object[][] data = db.getAllFlights();
+            for (Object[] row : data) {
+                flightTableModel.addRow(row);
+            }
+
             systemLogArea.append("Flight list refreshed at: " + java.time.LocalDateTime.now() + "\n");
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Flight list refreshed.\n" +
-                "This functionality will load actual data from database when implemented.",
-                "Refresh Flights",
-                JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -290,6 +385,183 @@ public class AdminGUI extends JFrame {
             }
         }
     }
+
+    private class AddFlightDialog extends JDialog {
+        private JTextField airplaneIDField, routeIDField, departureField, arrivalField,
+                seatsField, lengthField, priceField;
+        private DefaultTableModel model;
+
+        public AddFlightDialog(JFrame parent, DefaultTableModel model) {
+            super(parent, "Add New Flight", true);
+            this.model = model;
+            setSize(400, 450);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Airplane ID:"));
+            airplaneIDField = new JTextField();
+            formPanel.add(airplaneIDField);
+
+            formPanel.add(new JLabel("Route ID:"));
+            routeIDField = new JTextField();
+            formPanel.add(routeIDField);
+
+            formPanel.add(new JLabel("Departure (YYYY-MM-DD):"));
+            departureField = new JTextField();
+            formPanel.add(departureField);
+
+            formPanel.add(new JLabel("Arrival (YYYY-MM-DD):"));
+            arrivalField = new JTextField();
+            formPanel.add(arrivalField);
+
+            formPanel.add(new JLabel("Available Seats:"));
+            seatsField = new JTextField();
+            formPanel.add(seatsField);
+
+            formPanel.add(new JLabel("Length (HH:MM):"));
+            lengthField = new JTextField();
+            formPanel.add(lengthField);
+
+            formPanel.add(new JLabel("Price:"));
+            priceField = new JTextField();
+            formPanel.add(priceField);
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton saveButton = new JButton("Save Flight");
+            saveButton.addActionListener(e -> saveFlight());
+            add(saveButton, BorderLayout.SOUTH);
+        }
+
+        private void saveFlight() {
+            try {
+                int airplane_id = Integer.parseInt(airplaneIDField.getText());
+                int route_id = Integer.parseInt(routeIDField.getText());
+                String departureDate = departureField.getText();
+                String arrivalDate = arrivalField.getText();
+                Date departure = Date.StringToDate(departureDate);
+                Date arrival = Date.StringToDate(arrivalDate);
+                int seatsAvailable = Integer.parseInt(seatsField.getText());
+                String flightTime = lengthField.getText();
+                float price = Float.parseFloat(priceField.getText());
+                Object[] rowData = {
+                        db.insertFlight(airplane_id, route_id,  departure, arrival, seatsAvailable, flightTime, price),
+                        airplane_id,
+                        route_id,
+                        departureDate,
+                        arrivalDate,
+                        seatsAvailable,
+                        flightTime,
+                        price,
+                };
+                flightTableModel.addRow(rowData);
+
+                JOptionPane.showMessageDialog(this, "Flight added successfully.");
+                dispose();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid input. Please check the fields.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+            }
+        }
+    }
+    private class EditFlightDialog extends JDialog {
+        private JTextField airplaneIDField, routeIDField, departureField, arrivalField,
+                seatsField, lengthField, priceField;
+        private DefaultTableModel model;
+        private int rowIndex;
+        private Object flightID;
+
+        public EditFlightDialog(JFrame parent, DefaultTableModel model, int rowIndex,
+                                Object flightID, Object airplaneID, Object routeID,
+                                Object departureDate, Object arrivalDate, Object seatsAvailable,
+                                Object flightTime, Object price) {
+            super(parent, "Edit Flight", true);
+            this.model = model;
+            this.rowIndex = rowIndex;
+            this.flightID = flightID;
+
+            setSize(400, 450);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Airplane ID:"));
+            airplaneIDField = new JTextField(airplaneID.toString());
+            formPanel.add(airplaneIDField);
+
+            formPanel.add(new JLabel("Route ID:"));
+            routeIDField = new JTextField(routeID.toString());
+            formPanel.add(routeIDField);
+
+            formPanel.add(new JLabel("Departure (YYYY-MM-DD):"));
+            departureField = new JTextField(departureDate.toString());
+            formPanel.add(departureField);
+
+            formPanel.add(new JLabel("Arrival (YYYY-MM-DD):"));
+            arrivalField = new JTextField(arrivalDate.toString());
+            formPanel.add(arrivalField);
+
+            formPanel.add(new JLabel("Available Seats:"));
+            seatsField = new JTextField(seatsAvailable.toString());
+            formPanel.add(seatsField);
+
+            formPanel.add(new JLabel("Length (HH:MM):"));
+            lengthField = new JTextField(flightTime.toString());
+            formPanel.add(lengthField);
+
+            formPanel.add(new JLabel("Price:"));
+            priceField = new JTextField(price.toString());
+            formPanel.add(priceField);
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton updateButton = new JButton("Update Flight");
+            updateButton.addActionListener(e -> updateFlight());
+            add(updateButton, BorderLayout.SOUTH);
+        }
+
+        private void updateFlight() {
+            try {
+                int airplane_id = Integer.parseInt(airplaneIDField.getText());
+                int route_id = Integer.parseInt(routeIDField.getText());
+                Date departure = Date.StringToDate(departureField.getText());
+                Date arrival = Date.StringToDate(arrivalField.getText());
+                int seatsAvailable = Integer.parseInt(seatsField.getText());
+                String flightTime = lengthField.getText();
+                float price = Float.parseFloat(priceField.getText());
+
+                // Update database
+                db.updateFlight((int)flightID, airplane_id, route_id, departure, arrival, seatsAvailable, flightTime, price);
+                // Update table
+                model.setValueAt(airplane_id, rowIndex, 1);
+                model.setValueAt(route_id, rowIndex, 2);
+                model.setValueAt(departureField.getText(), rowIndex, 3);
+                model.setValueAt(arrivalField.getText(), rowIndex, 4);
+                model.setValueAt(seatsAvailable, rowIndex, 5);
+                model.setValueAt(flightTime, rowIndex, 6);
+                model.setValueAt(price, rowIndex, 7);
+
+                JOptionPane.showMessageDialog(this, "Flight updated successfully.");
+                dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid input. Please check the fields.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {

@@ -49,7 +49,14 @@ public class Date {
         return String.format("%04d-%02d-%02d", year, month, day);
     }
 
+    public static Date StringToDate(String date){
+        String[] parts = date.split("-");
+        int year = Integer.parseInt(parts[0]);
+        int month = Integer.parseInt(parts[1]);
+        int day = Integer.parseInt(parts[2]);
 
+        return new Date(day, month, year);
+    }
 
     @Override
     public String toString() {

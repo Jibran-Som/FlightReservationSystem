@@ -1,5 +1,8 @@
 package model;
 
+import backend.DatabaseManager;
+import java.sql.SQLException;
+
 public class Flight {
 
     private int flightId;
@@ -8,11 +11,12 @@ public class Flight {
     private Date departureDate;
     private Date arrivalDate;
     private int availableSeats;
-    private int flightTime;
+    private String flightTime;
     private float price;
+    private DatabaseManager db = DatabaseManager.getInstance();
 
     public Flight(Airplane airplane, Route route, Date departureDate, Date arrivalDate, int availableSeats,
-            int flightTime, float price) {
+            String flightTime, float price) throws SQLException {
         this.airplane = airplane;
         this.route = route;
         this.departureDate = departureDate;
@@ -20,6 +24,11 @@ public class Flight {
         this.availableSeats = availableSeats;
         this.flightTime = flightTime;
         this.price = price;
+        this.setFlightID(db.insertFlight(this.airplane.getAirplaneID(), this.route.getRouteID(), departureDate, arrivalDate, availableSeats, flightTime, price));
+    }
+
+    public int getFlightID() {
+        return flightId;
     }
 
     public Airplane getAirplane() {
@@ -42,12 +51,16 @@ public class Flight {
         return availableSeats;
     }
 
-    public int getFlightTime() {
+    public String getFlightTime() {
         return flightTime;
     }
 
     public float getPrice() {
         return price;
+    }
+
+    public void setFlightID(int flightId) {
+        this.flightId = flightId;
     }
 
     public void setAirplane(Airplane airplane) {
@@ -70,7 +83,7 @@ public class Flight {
         this.availableSeats = availableSeats;
     }
 
-    public void setFlightTime(int flightTime) {
+    public void setFlightTime(String flightTime) {
         this.flightTime = flightTime;
     }
 

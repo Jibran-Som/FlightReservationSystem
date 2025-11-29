@@ -78,10 +78,8 @@ DROP TABLE IF EXISTS route;
 
 CREATE TABLE route (
                        route_id       INT AUTO_INCREMENT PRIMARY KEY,
-                       airplane_id    INT NOT NULL,
                        origin_id      INT NOT NULL,
                        destination_id INT NOT NULL,
-                       FOREIGN KEY (airplane_id) REFERENCES airplane(airplane_id),
                        FOREIGN KEY (origin_id) REFERENCES address(address_id),
                        FOREIGN KEY (destination_id) REFERENCES address(address_id)
 );
@@ -95,7 +93,7 @@ CREATE TABLE flight (
                         departure_date   DATE NOT NULL,
                         arrival_date     DATE NOT NULL,
                         available_seats  INT,
-                        flight_length    INT,
+                        flight_length    VARCHAR(20),
                         price            FLOAT,
                         FOREIGN KEY (airplane_id) REFERENCES airplane(airplane_id),
                         FOREIGN KEY (route_id) REFERENCES route(route_id)

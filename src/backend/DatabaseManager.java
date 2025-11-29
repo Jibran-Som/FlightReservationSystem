@@ -1,12 +1,12 @@
 package backend;
 
-import model.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import model.*;
 
 
 public class DatabaseManager {
@@ -150,6 +150,12 @@ public class DatabaseManager {
         return insert("airline", columns, values, false);
     }
 
+    public int insertAirplane(Airline airline, String name, int flightNumber) throws SQLException {
+        String[] columns = {"airline_name", "name", "flight_number"};
+        Object[] values = {airline.getName(), name, flightNumber};
+        return insert("airplane", columns, values, true);
+    }
+
     public int insertAddress(String postalCode, int number, String street,
                              String city, String state, String country) throws SQLException {
         String[] columns = {"postal_code", "number", "street", "city", "state", "country"};
@@ -157,21 +163,27 @@ public class DatabaseManager {
         return insert("address", columns, values, true);
     }
 
-    public int insertFlight(int airplaneId, int routeId, String departureDate,
-                            String arrivalDate, int availableSeats, int flightLength, double price) throws SQLException {
+    public int insertFlight(int airplaneId, int routeId, Date departureDate,
+                            Date arrivalDate, int availableSeats, String flightLength, float price) throws SQLException {
+        java.sql.Date sqlDeparture = java.sql.Date.valueOf(departureDate.toSQLDate());
+        java.sql.Date sqlArrival   = java.sql.Date.valueOf(arrivalDate.toSQLDate());
         String[] columns = {"airplane_id", "route_id", "departure_date", "arrival_date",
                 "available_seats", "flight_length", "price"};
-        Object[] values = {airplaneId, routeId, departureDate, arrivalDate, availableSeats, flightLength, price};
+        Object[] values = {airplaneId, routeId, sqlDeparture, sqlArrival, availableSeats, flightLength, price};
         return insert("flight", columns, values, true);
     }
 
-    public int insertBooking(int customerId, int flightId, int seatNumber) throws SQLException {
-        String[] columns = {"customer_id", "flight_id", "seat_number"};
-        Object[] values = {customerId, flightId, seatNumber};
+    public int insertBooking(int airplaneId, int originId, int destinationId) throws SQLException {
+        String[] columns = {"airplane_id", "origin_id", "destination_number"};
+        Object[] values = {airplaneId, originId, destinationId};
         return insert("booking", columns, values, true);
     }
 
-
+    public int insertRoute(int origin_id, int destination_id) throws SQLException {
+        String[] columns = {"origin_id", "destination_id"};
+        Object[] values = {origin_id, destination_id};
+        return insert("route", columns, values, true);
+    }
 
 
     // UPDATE METHODS
@@ -186,7 +198,17 @@ public class DatabaseManager {
         return update("person", columns, values, whereClause, whereValues);
     }
 
-
+    public int updateFlight(int flightId, int airplaneId, int routeId, Date departureDate,
+        Date arrivalDate, int availableSeats, String flightLength, float price) throws SQLException{
+            String[] columns = {"airplane_id", "route_id", "departure_date", "arrival_date",
+                "available_seats", "flight_length", "price"};
+            java.sql.Date sqlDeparture = java.sql.Date.valueOf(departureDate.toSQLDate());
+            java.sql.Date sqlArrival   = java.sql.Date.valueOf(arrivalDate.toSQLDate());
+            Object[] values = {airplaneId, routeId, sqlDeparture, sqlArrival, availableSeats, flightLength, price};
+            String whereClause = "flight_id = ?";
+            Object[] whereValues = {flightId};
+            return update("flight", columns, values, whereClause, whereValues);
+        }
 
 
     public int update(String tableName, String[] columns, Object[] values, String whereClause, Object[] whereValues) throws SQLException {
@@ -228,7 +250,63 @@ public class DatabaseManager {
 
 
 
+    //SELECT Methods
 
+    public Object[][] getAllFlights() {
+        String query = "SELECT flight_id, airplane_id, route_id, departure_date, arrival_date, available_seats, flight_length, price FROM flight";
+        try (PreparedStatement pst = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = pst.executeQuery()) {
+
+            // Count rows
+            rs.last();
+            int rowCount = rs.getRow();
+            rs.beforeFirst();
+
+            Object[][] data = new Object[rowCount][8];
+            int i = 0;
+            while (rs.next()) {
+                data[i][0] = rs.getInt("flight_id");
+                data[i][1] = rs.getInt("airplane_id");
+                data[i][2] = rs.getInt("route_id");
+                data[i][3] = rs.getDate("departure_date").toString();
+                data[i][4] = rs.getDate("arrival_date").toString();
+                data[i][5] = rs.getInt("available_seats");
+                data[i][6] = rs.getString("flight_length");
+                data[i][7] = rs.getFloat("price");
+                i++;
+            }
+            return data;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new Object[0][0];
+        }
+    }
+
+
+    // DELETE
+    public int delete(String tableName, String whereClause, Object[] whereValues) throws SQLException {
+    if (whereClause == null || whereClause.trim().isEmpty()) {
+        throw new IllegalArgumentException("WHERE clause cannot be null or empty for DELETE.");
+    }
+
+    String sql = "DELETE FROM " + tableName + " WHERE " + whereClause;
+
+    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+        // Bind WHERE values
+        if (whereValues != null) {
+            for (int i = 0; i < whereValues.length; i++) {
+                pstmt.setObject(i + 1, whereValues[i]);
+            }
+        }
+
+        return pstmt.executeUpdate();
+    }
+}
+
+    public int deleteFlight(int flight_id) throws SQLException{
+        return delete("flight", "flight_id = ?", new Object[]{flight_id}); 
+    }
 
 
 

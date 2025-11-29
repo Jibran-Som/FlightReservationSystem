@@ -1,19 +1,40 @@
 package model;
 
+import backend.DatabaseManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Airplane {
 
+    private int airplaneID;
+    private Airline airline;
     private String name;
     private String status;
     private int flightNumber;
     private ArrayList<Route> routesFlying;
+   private DatabaseManager db = DatabaseManager.getInstance();
 
-    public Airplane(String name, String status, int flightNumber, ArrayList<Route> routesFlying) {
+    public Airplane(Airline airline, String name, String status, int flightNumber, ArrayList<Route> routesFlying) throws SQLException {
         this.name = name;
         this.status = status;
         this.flightNumber = flightNumber;
         this.routesFlying = routesFlying;
+        this.setAirplaneID(db.insertAirplane(airline, name, flightNumber));
+    }
+
+    public Airplane(Airline airline, String name, int flightNumber) throws SQLException {
+        this.airline = airline;
+        this.name = name;
+        this.flightNumber = flightNumber;
+        this.setAirplaneID(db.insertAirplane(airline, name, flightNumber));
+    }
+
+    public int getAirplaneID() {
+        return airplaneID;
+    }
+
+    public Airline getAirline() {
+        return airline;
     }
 
     public String getName() {
@@ -30,6 +51,14 @@ public class Airplane {
 
     public ArrayList<Route> getRoutesFlying() {
         return routesFlying;
+    }
+
+    public void setAirplaneID(int airplaneID) {
+        this.airplaneID = airplaneID;
+    }
+
+    public void setAirline(Airline airline) {
+        this.airline = airline;
     }
 
     public void setName(String name) {
