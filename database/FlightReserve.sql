@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS person;
 CREATE TABLE person
 (
     person_id            INT NOT NULL AUTO_INCREMENT,
+    username             VARCHAR(20) NOT NULL UNIQUE,
     first_name           VARCHAR(20) NOT NULL,
     last_name            VARCHAR(20) NOT NULL,
     date_born            DATE,
@@ -115,15 +116,16 @@ CREATE TABLE booking (
 
 -- Insert sample data into FLIGHTRESERVE database
 
+
 -- Insert into person and customer
-INSERT INTO person (first_name, last_name, date_born, password, role) VALUES
-                                                                          ('John', 'Smith', '1985-03-15', 'pass123', 'Customer'),
-                                                                          ('Sarah', 'Johnson', '1990-07-22', 'pass456', 'Customer'),
-                                                                          ('Michael', 'Brown', '1988-11-30', 'pass789', 'Customer'),
-                                                                          ('Emily', 'Davis', '1992-05-18', 'pass101', 'Customer'),
-                                                                          ('David', 'Wilson', '1983-09-12', 'pass202', 'Customer'),
-                                                                          ('Jennifer', 'Miller', '1995-02-28', 'agent123', 'FlightAgent'),
-                                                                          ('Robert', 'Taylor', '1980-12-05', 'admin123', 'Admin');
+INSERT INTO person (username, first_name, last_name, date_born, password, role) VALUES
+                                                                          ('johns', 'John', 'Smith', '1985-03-15', 'pass123', 'Customer'),
+                                                                          ('sarahj', 'Sarah', 'Johnson', '1990-07-22', 'pass456', 'Customer'),
+                                                                          ('mb', 'Michael', 'Brown', '1988-11-30', 'pass789', 'Customer'),
+                                                                          ('edavis', 'Emily', 'Davis', '1992-05-18', 'pass101', 'Customer'),
+                                                                          ('dwilson', 'David', 'Wilson', '1983-09-12', 'pass202', 'Customer'),
+                                                                          ('jenagent', 'Jennifer', 'Miller', '1995-02-28', 'agent123', 'FlightAgent'),
+                                                                          ('robadmin', 'Robert', 'Taylor', '1980-12-05', 'admin123', 'Admin');
 
 -- Insert into customer (emails)
 INSERT INTO customer (customer_id, email) VALUES

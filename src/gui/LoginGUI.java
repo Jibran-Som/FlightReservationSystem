@@ -4,14 +4,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.*;
 
 public class LoginGUI extends JFrame {
-    private JComboBox<String> roleComboBox;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
     private JButton cancelButton;
 
+    // Database connection details
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/FLIGHTRESERVE?useSSL=false&allowPublicKeyRetrieval=true";
+    
     public LoginGUI() {
         initializeGUI();
     }
@@ -20,7 +23,7 @@ public class LoginGUI extends JFrame {
         // Set up the main frame
         setTitle("Flight Reservation System - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(400, 250);
         setLocationRelativeTo(null); // Center the window
         setResizable(false);
 
@@ -41,28 +44,19 @@ public class LoginGUI extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Role selection
-        gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("Role:"), gbc);
-
-        gbc.gridx = 1; gbc.gridy = 0;
-        String[] roles = {"Customer", "Flight Agent", "System Administrator"};
-        roleComboBox = new JComboBox<>(roles);
-        formPanel.add(roleComboBox, gbc);
-
         // Username field
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0; gbc.gridy = 0;
         formPanel.add(new JLabel("Username:"), gbc);
 
-        gbc.gridx = 1; gbc.gridy = 1;
+        gbc.gridx = 1; gbc.gridy = 0;
         usernameField = new JTextField(15);
         formPanel.add(usernameField, gbc);
 
         // Password field
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0; gbc.gridy = 1;
         formPanel.add(new JLabel("Password:"), gbc);
 
-        gbc.gridx = 1; gbc.gridy = 2;
+        gbc.gridx = 1; gbc.gridy = 1;
         passwordField = new JPasswordField(15);
         formPanel.add(passwordField, gbc);
 
@@ -93,7 +87,6 @@ public class LoginGUI extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String username = usernameField.getText().trim();
             String password = new String(passwordField.getPassword());
-            String role = (String) roleComboBox.getSelectedItem();
 
             // Basic validation
             if (username.isEmpty() || password.isEmpty()) {
@@ -104,11 +97,12 @@ public class LoginGUI extends JFrame {
                 return;
             }
 
-            // Here you would typically validate credentials against a database
-            // For now, we'll use a simple simulation
-            if (authenticateUser(username, password, role)) {
+            // Authenticate against database and get role
+            String role = authenticateUser(username, password);
+            
+            if (role != null) {
                 JOptionPane.showMessageDialog(LoginGUI.this,
-                    "Login successful! Welcome " + role + ": " + username,
+                    "Login successful! Welcome " + getRoleDisplayName(role) + ": " + username,
                     "Success",
                     JOptionPane.INFORMATION_MESSAGE);
 
@@ -117,7 +111,7 @@ public class LoginGUI extends JFrame {
                 openMainApplication(role, username);
             } else {
                 JOptionPane.showMessageDialog(LoginGUI.this,
-                    "Invalid username, password, or role selection.",
+                    "Invalid username or password.",
                     "Login Failed",
                     JOptionPane.ERROR_MESSAGE);
 
@@ -127,43 +121,86 @@ public class LoginGUI extends JFrame {
             }
         }
 
-        private boolean authenticateUser(String username, String password, String role) {
-            // This is a simple simulation - in real implementation,
-            // you would query the database to validate credentials
+        private String authenticateUser(String username, String password) {
+            Connection conn = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            
+            try {
+                // Try all database users to find the right connection
+                String[][] dbUsers = {
+                    {"admin_user", "admin_password"},
+                    {"agent_user", "agent_password"}, 
+                    {"customer_user", "customer_password"}
+                };
+                
+                for (String[] dbUser : dbUsers) {
+                    String dbUsername = dbUser[0];
+                    String dbPassword = dbUser[1];
+                    
+                    try {
+                        conn = DriverManager.getConnection(DB_URL, dbUsername, dbPassword);
+                        
+                        // Query to check user credentials in person table
+                        String sql = "SELECT p.role FROM person p WHERE p.username = ? AND p.password = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1, username);
+                        pstmt.setString(2, password);
+                        
+                        rs = pstmt.executeQuery();
+                        
+                        if (rs.next()) {
+                            // User found! Return their role
+                            return rs.getString("role");
+                        }
+                    } catch (SQLException ex) {
+                        // Try next user type
+                        continue;
+                    } finally {
+                        // Close resources for this attempt
+                        try { if (rs != null) rs.close(); } catch (SQLException ex) {}
+                        try { if (pstmt != null) pstmt.close(); } catch (SQLException ex) {}
+                        try { if (conn != null) conn.close(); } catch (SQLException ex) {}
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(LoginGUI.this,
+                    "Database connection error: " + ex.getMessage(),
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+            
+            return null; // Authentication failed
+        }
 
-            // For demo purposes, accept any non-empty credentials
-            // In your actual implementation, replace this with database authentication
-            return !username.isEmpty() && !password.isEmpty();
+        private String getRoleDisplayName(String role) {
+            switch (role) {
+                case "Customer": return "Customer";
+                case "FlightAgent": return "Flight Agent";
+                case "Admin": return "System Administrator";
+                default: return "User";
+            }
         }
 
         private void openMainApplication(String role, String username) {
-            // This method would open the appropriate main application window
-            // based on the user's role
-
             switch (role) {
                 case "Customer":
-                    // Open Customer GUI
                     new CustomerGUI(username).setVisible(true);
-                    System.out.println("Opening Customer interface for: " + username);
                     break;
-                case "Flight Agent":
-                    // Open Flight Agent GUI
+                case "FlightAgent":
                     new FlightAgentGUI(username).setVisible(true);
-                    System.out.println("Opening Flight Agent interface for: " + username);
                     break;
-                case "System Administrator":
-                    // Open Admin GUI
+                case "Admin":
                     new AdminGUI(username).setVisible(true);
-                    System.out.println("Opening System Administrator interface for: " + username);
                     break;
+                default:
+                    // If role doesn't match, show error
+                    JOptionPane.showMessageDialog(LoginGUI.this,
+                        "Unknown user role: " + role,
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
-
-            // // For now, just show a message
-            // JOptionPane.showMessageDialog(null,
-            //     role + " Dashboard would open here for user: " + username + "\n" +
-            //     "Implementation of main application windows is pending.",
-            //     "Application Launch",
-            //     JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -183,9 +220,6 @@ public class LoginGUI extends JFrame {
 
     // Main method to run the application
     public static void main(String[] args) {
-        // Set system look and feel
-
-
         // Create and show the login GUI
         SwingUtilities.invokeLater(new Runnable() {
             @Override
