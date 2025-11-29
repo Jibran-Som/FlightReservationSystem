@@ -13,6 +13,13 @@ public class Admin extends Person {
         this.setId(db.insertPerson(firstName, lastName, DoB.toSQLDate(), "admin_pass", "Admin"));
     }
 
+    public Admin(int id, String firstName, String lastName, Date DoB, boolean inDatabase) throws SQLException {
+        super(firstName, lastName, DoB);
+        if(!inDatabase){
+            this.setId(db.insertPerson(firstName, lastName, DoB.toSQLDate(), "admin_pass", "Admin"));
+        }
+    }
+
 
 
     @Override

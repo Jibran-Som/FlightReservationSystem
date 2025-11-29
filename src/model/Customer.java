@@ -31,6 +31,19 @@ public class Customer extends Person {
         db.insertCustomer(this.getId(), "");
     }
 
+
+    public Customer(String fn, String ln, Date dob, boolean inDatabase) throws SQLException {
+
+        super(fn, ln, dob);
+        this.setId(db.insertPerson(fn, ln, dob.toSQLDate(), "Customer"));
+        this.email = "";
+        this.phoneNumber = "";
+
+        if(!inDatabase) {
+            db.insertCustomer(this.getId(), "");
+        }
+    }
+
     public Address getAddress() {
         return address;
     }

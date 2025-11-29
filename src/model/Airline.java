@@ -21,6 +21,13 @@ public class Airline {
         db.insertAirline(name);
     }
 
+    public Airline(String name, boolean inDatabase) throws SQLException{
+        this.name = name;
+        if(!inDatabase){
+            db.insertAirline(name);
+        }
+    }
+
     public String getName(){
         return this.name;
     }

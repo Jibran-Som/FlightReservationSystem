@@ -19,6 +19,17 @@ public class FlightAgent extends Person {
 
 
 
+    public FlightAgent(int id, String firstName, String lastName, Date DoB, ArrayList<Customer> clients, boolean inDatabase) throws SQLException {
+        super(firstName, lastName, DoB);
+        this.clients = clients;
+
+        if (!inDatabase) {
+            this.setId(db.insertPerson(firstName, lastName, DoB.toSQLDate(), "flight_pass", "FlightAgent"));
+        }
+    }
+
+
+
     public ArrayList<Customer> getClients() {
         return clients;
     }
