@@ -1,9 +1,11 @@
 package model;
 
 public class Route {
-    
+
+    private int routeId;
     private Address departureLocation;
     private Address arrivalLocation;
+
     public Route(Address departureLocation, Address arrivalLocation) {
         this.departureLocation = departureLocation;
         this.arrivalLocation = arrivalLocation;

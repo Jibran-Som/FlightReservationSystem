@@ -2,6 +2,7 @@ package model;
 
 public class Flight {
 
+    private int flightId;
     private Airplane airplane;
     private Route route;
     private Date departureDate;
@@ -20,7 +21,7 @@ public class Flight {
         this.flightTime = flightTime;
         this.price = price;
     }
-    
+
     public Airplane getAirplane() {
         return airplane;
     }
