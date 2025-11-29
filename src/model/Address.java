@@ -1,3 +1,5 @@
+package model;
+
 public class Address {
 
     private int number;
@@ -71,7 +73,7 @@ public class Address {
 
 
 
-    
+
     @Override
     public String toString() {
         return number + " " + street + ", " + city + ", " + state + ", " + country;

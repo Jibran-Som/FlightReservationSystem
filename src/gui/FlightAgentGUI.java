@@ -1,3 +1,4 @@
+package gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,12 +8,12 @@ import java.awt.event.ActionListener;
 public class FlightAgentGUI extends JFrame {
     private String currentUser;
     private JTabbedPane tabbedPane;
-    
+
     // Flight Management Components
     private JTextField flightSearchField;
     private JButton searchFlightButton;
     private JTable flightTable;
-    
+
     // Customer Management Components
     private JTextField customerSearchField;
     private JButton searchCustomerButton;
@@ -20,7 +21,7 @@ public class FlightAgentGUI extends JFrame {
     private JButton addCustomerButton;
     private JButton editCustomerButton;
     private JButton removeCustomerButton;
-    
+
     // Booking Management Components
     private JTable bookingTable;
     private JButton createBookingButton;
@@ -37,7 +38,7 @@ public class FlightAgentGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
-        
+
         // Create main panel
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -47,27 +48,27 @@ public class FlightAgentGUI extends JFrame {
         JLabel welcomeLabel = new JLabel("Welcome, Flight Agent: " + currentUser);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
-        
+
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(new LogoutButtonListener());
         headerPanel.add(logoutButton, BorderLayout.EAST);
-        
+
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Create tabbed pane for different functionalities
         tabbedPane = new JTabbedPane();
-        
+
         // Flight Management Tab
         tabbedPane.addTab("Flight Management", createFlightManagementPanel());
-        
+
         // Customer Management Tab
         tabbedPane.addTab("Customer Management", createCustomerManagementPanel());
-        
+
         // Booking Management Tab
         tabbedPane.addTab("Booking Management", createBookingManagementPanel());
-        
+
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        
+
         add(mainPanel);
     }
 
@@ -102,7 +103,7 @@ public class FlightAgentGUI extends JFrame {
 
         // Search and button panel
         JPanel topPanel = new JPanel(new BorderLayout());
-        
+
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.add(new JLabel("Search Customers:"));
         customerSearchField = new JTextField(20);
@@ -110,22 +111,22 @@ public class FlightAgentGUI extends JFrame {
         searchCustomerButton = new JButton("Search");
         searchCustomerButton.addActionListener(new SearchCustomerListener());
         searchPanel.add(searchCustomerButton);
-        
+
         topPanel.add(searchPanel, BorderLayout.WEST);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addCustomerButton = new JButton("Add Customer");
         editCustomerButton = new JButton("Edit Customer");
         removeCustomerButton = new JButton("Remove Customer");
-        
+
         addCustomerButton.addActionListener(new AddCustomerListener());
         editCustomerButton.addActionListener(new EditCustomerListener());
         removeCustomerButton.addActionListener(new RemoveCustomerListener());
-        
+
         buttonPanel.add(addCustomerButton);
         buttonPanel.add(editCustomerButton);
         buttonPanel.add(removeCustomerButton);
-        
+
         topPanel.add(buttonPanel, BorderLayout.EAST);
         panel.add(topPanel, BorderLayout.NORTH);
 
@@ -148,11 +149,11 @@ public class FlightAgentGUI extends JFrame {
         createBookingButton = new JButton("Create New Booking");
         cancelBookingButton = new JButton("Cancel Booking");
         viewBookingButton = new JButton("View Booking Details");
-        
+
         createBookingButton.addActionListener(new CreateBookingListener());
         cancelBookingButton.addActionListener(new CancelBookingListener());
         viewBookingButton.addActionListener(new ViewBookingListener());
-        
+
         buttonPanel.add(createBookingButton);
         buttonPanel.add(cancelBookingButton);
         buttonPanel.add(viewBookingButton);
@@ -261,7 +262,7 @@ public class FlightAgentGUI extends JFrame {
                 "Are you sure you want to logout?",
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 dispose();
                 new LoginGUI().setVisible(true);

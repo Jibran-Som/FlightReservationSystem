@@ -1,5 +1,5 @@
 DROP DATABASE IF EXISTS FLIGHTRESERVE;
-CREATE DATABASE FLIGHTRESERVE; 
+CREATE DATABASE FLIGHTRESERVE;
 USE FLIGHTRESERVE;
 
 DROP TABLE IF EXISTS person;
@@ -10,8 +10,8 @@ CREATE TABLE person
     first_name           VARCHAR(20) NOT NULL,
     last_name            VARCHAR(20) NOT NULL,
     date_born            DATE,
-    username             VARCHAR(30) NOT NULL,
-    password             VARCHAR(30) NOT NULL,
+    username             VARCHAR(30),
+    password             VARCHAR(30),
     role                 CHAR(20) NOT NULL,
     PRIMARY KEY (person_id)
 );

@@ -1,3 +1,5 @@
+package gui;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -42,7 +44,7 @@ public class LoginGUI extends JFrame {
         // Role selection
         gbc.gridx = 0; gbc.gridy = 0;
         formPanel.add(new JLabel("Role:"), gbc);
-        
+
         gbc.gridx = 1; gbc.gridy = 0;
         String[] roles = {"Customer", "Flight Agent", "System Administrator"};
         roleComboBox = new JComboBox<>(roles);
@@ -51,7 +53,7 @@ public class LoginGUI extends JFrame {
         // Username field
         gbc.gridx = 0; gbc.gridy = 1;
         formPanel.add(new JLabel("Username:"), gbc);
-        
+
         gbc.gridx = 1; gbc.gridy = 1;
         usernameField = new JTextField(15);
         formPanel.add(usernameField, gbc);
@@ -59,7 +61,7 @@ public class LoginGUI extends JFrame {
         // Password field
         gbc.gridx = 0; gbc.gridy = 2;
         formPanel.add(new JLabel("Password:"), gbc);
-        
+
         gbc.gridx = 1; gbc.gridy = 2;
         passwordField = new JPasswordField(15);
         formPanel.add(passwordField, gbc);
@@ -74,7 +76,7 @@ public class LoginGUI extends JFrame {
         // Add action listeners
         loginButton.addActionListener(new LoginButtonListener());
         cancelButton.addActionListener(new CancelButtonListener());
-        
+
         // Allow Enter key to trigger login
         getRootPane().setDefaultButton(loginButton);
 
@@ -109,7 +111,7 @@ public class LoginGUI extends JFrame {
                     "Login successful! Welcome " + role + ": " + username,
                     "Success",
                     JOptionPane.INFORMATION_MESSAGE);
-                
+
                 // Close login window and open the main application for the specific role
                 dispose();
                 openMainApplication(role, username);
@@ -118,7 +120,7 @@ public class LoginGUI extends JFrame {
                     "Invalid username, password, or role selection.",
                     "Login Failed",
                     JOptionPane.ERROR_MESSAGE);
-                
+
                 // Clear password field
                 passwordField.setText("");
                 usernameField.requestFocus();
@@ -126,9 +128,9 @@ public class LoginGUI extends JFrame {
         }
 
         private boolean authenticateUser(String username, String password, String role) {
-            // This is a simple simulation - in real implementation, 
+            // This is a simple simulation - in real implementation,
             // you would query the database to validate credentials
-            
+
             // For demo purposes, accept any non-empty credentials
             // In your actual implementation, replace this with database authentication
             return !username.isEmpty() && !password.isEmpty();
@@ -137,7 +139,7 @@ public class LoginGUI extends JFrame {
         private void openMainApplication(String role, String username) {
             // This method would open the appropriate main application window
             // based on the user's role
-            
+
             switch (role) {
                 case "Customer":
                     // Open Customer GUI
@@ -155,7 +157,7 @@ public class LoginGUI extends JFrame {
                     System.out.println("Opening System Administrator interface for: " + username);
                     break;
             }
-            
+
             // // For now, just show a message
             // JOptionPane.showMessageDialog(null,
             //     role + " Dashboard would open here for user: " + username + "\n" +
@@ -172,7 +174,7 @@ public class LoginGUI extends JFrame {
                 "Are you sure you want to exit?",
                 "Confirm Exit",
                 JOptionPane.YES_NO_OPTION);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 System.exit(0);
             }

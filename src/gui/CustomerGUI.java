@@ -1,3 +1,4 @@
+package gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -6,7 +7,7 @@ import java.awt.event.ActionListener;
 
 public class CustomerGUI extends JFrame {
     private String currentUser;
-    
+
     // Flight Search Components
     private JTextField departureField;
     private JTextField destinationField;
@@ -14,12 +15,12 @@ public class CustomerGUI extends JFrame {
     private JButton searchFlightsButton;
     private JTable flightTable;
     private JButton bookFlightButton;
-    
+
     // My Bookings Components
     private JTable bookingsTable;
     private JButton cancelBookingButton;
     private JButton viewBookingButton;
-    
+
     // Profile Components
     private JTextField profileNameField;
     private JTextField profileEmailField;
@@ -36,7 +37,7 @@ public class CustomerGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
-        
+
         // Create main panel with tabbed interface
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -46,27 +47,27 @@ public class CustomerGUI extends JFrame {
         JLabel welcomeLabel = new JLabel("Welcome, " + currentUser + "!");
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
-        
+
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(new LogoutButtonListener());
         headerPanel.add(logoutButton, BorderLayout.EAST);
-        
+
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Create tabbed pane
         JTabbedPane tabbedPane = new JTabbedPane();
-        
+
         // Flight Search & Booking Tab
         tabbedPane.addTab("Search & Book Flights", createFlightSearchPanel());
-        
+
         // My Bookings Tab
         tabbedPane.addTab("My Bookings", createBookingsPanel());
-        
+
         // My Profile Tab
         tabbedPane.addTab("My Profile", createProfilePanel());
-        
+
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        
+
         add(mainPanel);
     }
 
@@ -77,19 +78,19 @@ public class CustomerGUI extends JFrame {
         // Search criteria panel
         JPanel searchPanel = new JPanel(new GridLayout(2, 4, 5, 5));
         searchPanel.setBorder(BorderFactory.createTitledBorder("Search Criteria"));
-        
+
         searchPanel.add(new JLabel("Departure:"));
         departureField = new JTextField();
         searchPanel.add(departureField);
-        
+
         searchPanel.add(new JLabel("Destination:"));
         destinationField = new JTextField();
         searchPanel.add(destinationField);
-        
+
         searchPanel.add(new JLabel("Date (YYYY-MM-DD):"));
         dateField = new JTextField();
         searchPanel.add(dateField);
-        
+
         searchPanel.add(new JLabel("")); // Empty label for spacing
         searchFlightsButton = new JButton("Search Flights");
         searchFlightsButton.addActionListener(new SearchFlightsListener());
@@ -100,13 +101,13 @@ public class CustomerGUI extends JFrame {
         // Results panel
         JPanel resultsPanel = new JPanel(new BorderLayout());
         resultsPanel.setBorder(BorderFactory.createTitledBorder("Available Flights"));
-        
+
         String[] columnNames = {"Flight ID", "Airline", "Departure", "Arrival", "Date", "Time", "Price", "Available Seats"};
         Object[][] data = {}; // Empty for now
         flightTable = new JTable(data, columnNames);
         JScrollPane scrollPane = new JScrollPane(flightTable);
         resultsPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         bookFlightButton = new JButton("Book Selected Flight");
         bookFlightButton.addActionListener(new BookFlightListener());
         resultsPanel.add(bookFlightButton, BorderLayout.SOUTH);
@@ -124,10 +125,10 @@ public class CustomerGUI extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         cancelBookingButton = new JButton("Cancel Booking");
         viewBookingButton = new JButton("View Booking Details");
-        
+
         cancelBookingButton.addActionListener(new CancelBookingListener());
         viewBookingButton.addActionListener(new ViewBookingListener());
-        
+
         buttonPanel.add(cancelBookingButton);
         buttonPanel.add(viewBookingButton);
 
@@ -149,19 +150,19 @@ public class CustomerGUI extends JFrame {
 
         JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createTitledBorder("Personal Information"));
-        
+
         formPanel.add(new JLabel("Full Name:"));
         profileNameField = new JTextField();
         formPanel.add(profileNameField);
-        
+
         formPanel.add(new JLabel("Email:"));
         profileEmailField = new JTextField();
         formPanel.add(profileEmailField);
-        
+
         formPanel.add(new JLabel("Phone Number:"));
         profilePhoneField = new JTextField();
         formPanel.add(profilePhoneField);
-        
+
         formPanel.add(new JLabel("")); // Empty label for spacing
         updateProfileButton = new JButton("Update Profile");
         updateProfileButton.addActionListener(new UpdateProfileListener());
@@ -179,7 +180,7 @@ public class CustomerGUI extends JFrame {
             String departure = departureField.getText().trim();
             String destination = destinationField.getText().trim();
             String date = dateField.getText().trim();
-            
+
             JOptionPane.showMessageDialog(CustomerGUI.this,
                 "Searching flights:\n" +
                 "Departure: " + departure + "\n" +
@@ -239,7 +240,7 @@ public class CustomerGUI extends JFrame {
                 "Are you sure you want to logout?",
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 dispose();
                 new LoginGUI().setVisible(true);

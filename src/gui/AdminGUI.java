@@ -1,3 +1,4 @@
+package gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,20 +8,20 @@ import java.awt.event.ActionListener;
 public class AdminGUI extends JFrame {
     private String currentUser;
     private JTabbedPane tabbedPane;
-    
+
     // Flight Management Components
     private JTable flightTable;
     private JButton addFlightButton;
     private JButton editFlightButton;
     private JButton removeFlightButton;
     private JButton refreshFlightsButton;
-    
+
     // User Management Components
     private JTable userTable;
     private JButton addUserButton;
     private JButton editUserButton;
     private JButton removeUserButton;
-    
+
     // System Management Components
     private JTextArea systemLogArea;
     private JButton generateReportButton;
@@ -36,7 +37,7 @@ public class AdminGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700);
         setLocationRelativeTo(null);
-        
+
         // Create main panel
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -46,27 +47,27 @@ public class AdminGUI extends JFrame {
         JLabel welcomeLabel = new JLabel("Welcome, System Administrator: " + currentUser);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
-        
+
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(new LogoutButtonListener());
         headerPanel.add(logoutButton, BorderLayout.EAST);
-        
+
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Create tabbed pane for different functionalities
         tabbedPane = new JTabbedPane();
-        
+
         // Flight Management Tab
         tabbedPane.addTab("Flight Management", createFlightManagementPanel());
-        
+
         // User Management Tab
         tabbedPane.addTab("User Management", createUserManagementPanel());
-        
+
         // System Management Tab
         tabbedPane.addTab("System Management", createSystemManagementPanel());
-        
+
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        
+
         add(mainPanel);
     }
 
@@ -80,12 +81,12 @@ public class AdminGUI extends JFrame {
         editFlightButton = new JButton("Edit Flight");
         removeFlightButton = new JButton("Remove Flight");
         refreshFlightsButton = new JButton("Refresh");
-        
+
         addFlightButton.addActionListener(new AddFlightListener());
         editFlightButton.addActionListener(new EditFlightListener());
         removeFlightButton.addActionListener(new RemoveFlightListener());
         refreshFlightsButton.addActionListener(new RefreshFlightsListener());
-        
+
         buttonPanel.add(addFlightButton);
         buttonPanel.add(editFlightButton);
         buttonPanel.add(removeFlightButton);
@@ -112,11 +113,11 @@ public class AdminGUI extends JFrame {
         addUserButton = new JButton("Add User");
         editUserButton = new JButton("Edit User");
         removeUserButton = new JButton("Remove User");
-        
+
         addUserButton.addActionListener(new AddUserListener());
         editUserButton.addActionListener(new EditUserListener());
         removeUserButton.addActionListener(new RemoveUserListener());
-        
+
         buttonPanel.add(addUserButton);
         buttonPanel.add(editUserButton);
         buttonPanel.add(removeUserButton);
@@ -141,10 +142,10 @@ public class AdminGUI extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         generateReportButton = new JButton("Generate System Report");
         viewPromotionsButton = new JButton("Manage Promotions");
-        
+
         generateReportButton.addActionListener(new GenerateReportListener());
         viewPromotionsButton.addActionListener(new ViewPromotionsListener());
-        
+
         buttonPanel.add(generateReportButton);
         buttonPanel.add(viewPromotionsButton);
 
@@ -153,16 +154,16 @@ public class AdminGUI extends JFrame {
         // System log area
         JPanel logPanel = new JPanel(new BorderLayout());
         logPanel.setBorder(BorderFactory.createTitledBorder("System Log"));
-        
+
         systemLogArea = new JTextArea(15, 50);
         systemLogArea.setEditable(false);
         systemLogArea.setText("System initialized...\n");
         systemLogArea.append("Welcome, Administrator " + currentUser + "\n");
         systemLogArea.append("Current system time: " + java.time.LocalDateTime.now() + "\n");
-        
+
         JScrollPane scrollPane = new JScrollPane(systemLogArea);
         logPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         JButton clearLogButton = new JButton("Clear Log");
         clearLogButton.addActionListener(new ClearLogListener());
         logPanel.add(clearLogButton, BorderLayout.SOUTH);
@@ -282,7 +283,7 @@ public class AdminGUI extends JFrame {
                 "Are you sure you want to logout?",
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
-            
+
             if (result == JOptionPane.YES_OPTION) {
                 dispose();
                 new LoginGUI().setVisible(true);

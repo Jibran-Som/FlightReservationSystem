@@ -1,14 +1,16 @@
+package model;
+
 public class Customer extends Person {
 
-    private Address address; 
-    private String email; 
-    private String phoneNumber; 
+    private Address address;
+    private String email;
+    private String phoneNumber;
 
     public Customer(int id, String firstName, String lastName, Date DoB, Address address, String email, String phoneNumber){
-        super(id, firstName, lastName, DoB); 
-        this.address = address; 
-        this.email = email; 
-        this.phoneNumber = phoneNumber; 
+        super(id, firstName, lastName, DoB);
+        this.address = address;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 
     public Address getAddress() {
@@ -47,4 +49,6 @@ public class Customer extends Person {
                 ", phoneNumber='" + phoneNumber + '\'' +
                 '}';
     }
+
+
 }

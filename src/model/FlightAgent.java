@@ -1,11 +1,13 @@
-import java.lang.reflect.Array;
+package model;
+
+
 import java.util.ArrayList;
 
 public class FlightAgent extends Person {
-    private ArrayList<Customer> clients; 
+    private ArrayList<Customer> clients;
 
     public FlightAgent(int id, String firstName, String lastName, Date DoB, ArrayList<Customer> clients){
-        super(id, firstName, lastName, DoB); 
+        super(id, firstName, lastName, DoB);
         this.clients = clients;
     }
 
@@ -21,7 +23,7 @@ public class FlightAgent extends Person {
 
 
 
-    
+
     public void addClient(Customer customer) {
         this.clients.add(customer);
     }
@@ -40,5 +42,5 @@ public class FlightAgent extends Person {
                 ", clients=" + clients +
                 '}';
     }
-    
+
 }

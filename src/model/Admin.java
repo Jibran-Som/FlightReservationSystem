@@ -1,8 +1,10 @@
+package model;
+
 public class Admin extends Person {
 
 
     public Admin(int id, String firstName, String lastName, Date DoB){
-        super(id, firstName, lastName, DoB); 
+        super(id, firstName, lastName, DoB);
     }
 
 
@@ -16,5 +18,5 @@ public class Admin extends Person {
                 ", DoB=" + getDoB() +
                 '}';
     }
-    
+
 }
