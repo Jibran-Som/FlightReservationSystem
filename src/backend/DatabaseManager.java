@@ -71,9 +71,9 @@ public class DatabaseManager {
 
     // INSERTION METHODS
 
-    public int insert(String tableName, String[] columns, Object[] values) throws SQLException {
+    public int insert(String tableName, String[] columns, Object[] values, boolean expectGeneratedKey) throws SQLException {
         if (columns.length != values.length) {
-            throw new IllegalArgumentException("Columns and values arrays must have the same length");
+            throw new IllegalArgumentException("Columns and values arrays must match");
         }
 
         StringBuilder sql = new StringBuilder("INSERT INTO " + tableName + " (");
@@ -82,71 +82,79 @@ public class DatabaseManager {
         for (int i = 0; i < columns.length; i++) {
             sql.append(columns[i]);
             placeholders.append("?");
-
             if (i < columns.length - 1) {
                 sql.append(", ");
                 placeholders.append(", ");
             }
         }
 
-        // INSERT INTO person (first_name, last_name, date_born, username, password, role) VALUES (?, ?, ?, ?, ?, ?)
-
         placeholders.append(")");
         sql.append(placeholders);
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS)) {
-            for (int i = 0; i < values.length; i++) {
-                pstmt.setObject(i + 1, values[i]);
-            }
+        PreparedStatement pstmt;
+        if (expectGeneratedKey) {
+            pstmt = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+        } else {
+            pstmt = connection.prepareStatement(sql.toString());
+        }
 
-            int affectedRows = pstmt.executeUpdate();
+        for (int i = 0; i < values.length; i++) {
+            pstmt.setObject(i + 1, values[i]);
+        }
 
-            if (affectedRows == 0) {
-                throw new SQLException("Insert failed, no rows affected.");
-            }
+        int affectedRows = pstmt.executeUpdate();
+        if (affectedRows == 0) {
+            throw new SQLException("Insert failed, no rows affected.");
+        }
 
-            // Get the generated key
+        if (expectGeneratedKey) {
             ResultSet generatedKeys = pstmt.getGeneratedKeys();
             if (generatedKeys.next()) {
                 return generatedKeys.getInt(1);
-            }
-            else {
+            } else {
                 throw new SQLException("Insert failed, no ID obtained.");
             }
-
+        } else {
+            return -1; // ID was manually supplied
         }
     }
 
-    public int insertPerson(String firstName, String lastName, String dateBorn,
-                            String password, String role) throws SQLException {
+
+    public int insertPerson(String firstName, String lastName, String dateBorn, String role) throws SQLException {
+        String[] columns = {"first_name", "last_name", "date_born", "role"};
+        Object[] values = {firstName, lastName, dateBorn, role};
+        return insert("person", columns, values, true); // expect generated ID
+    }
+
+    public int insertPerson(String firstName, String lastName, String dateBorn, String password, String role) throws SQLException {
         String[] columns = {"first_name", "last_name", "date_born", "password", "role"};
         Object[] values = {firstName, lastName, dateBorn, password, role};
-        return insert("person", columns, values);
+        return insert("person", columns, values, true); // expect generated ID
     }
 
     public void insertCustomer(int personId, String email) throws SQLException {
         String[] columns = {"customer_id", "email"};
         Object[] values = {personId, email};
-        insert("customer", columns, values);
+        insert("customer", columns, values, false);
     }
 
     public int insertAgent(int personId) throws SQLException {
         String[] columns = {"agent_id"};
         Object[] values = {personId};
-        return insert("agent", columns, values);
+        return insert("agent", columns, values, false);
     }
 
     public int insertAirline(String airlineName) throws SQLException {
         String[] columns = {"airline_name"};
         Object[] values = {airlineName};
-        return insert("airline", columns, values);
+        return insert("airline", columns, values, false);
     }
 
     public int insertAddress(String postalCode, int number, String street,
                              String city, String state, String country) throws SQLException {
         String[] columns = {"postal_code", "number", "street", "city", "state", "country"};
         Object[] values = {postalCode, number, street, city, state, country};
-        return insert("address", columns, values);
+        return insert("address", columns, values, true);
     }
 
     public int insertFlight(int airplaneId, int routeId, String departureDate,
@@ -154,13 +162,13 @@ public class DatabaseManager {
         String[] columns = {"airplane_id", "route_id", "departure_date", "arrival_date",
                 "available_seats", "flight_length", "price"};
         Object[] values = {airplaneId, routeId, departureDate, arrivalDate, availableSeats, flightLength, price};
-        return insert("flight", columns, values);
+        return insert("flight", columns, values, true);
     }
 
     public int insertBooking(int customerId, int flightId, int seatNumber) throws SQLException {
         String[] columns = {"customer_id", "flight_id", "seat_number"};
         Object[] values = {customerId, flightId, seatNumber};
-        return insert("booking", columns, values);
+        return insert("booking", columns, values, true);
     }
 
 

@@ -25,7 +25,7 @@ public class Customer extends Person {
 
     public Customer(String fn, String ln, Date dob) throws SQLException {
         super(fn, ln, dob);
-        this.setId(db.insertPerson(fn, ln, dob.toSQLDate(), "", "Customer"));
+        this.setId(db.insertPerson(fn, ln, dob.toSQLDate(), "Customer"));
         this.email = "";
         this.phoneNumber = "";
         db.insertCustomer(this.getId(), "");
