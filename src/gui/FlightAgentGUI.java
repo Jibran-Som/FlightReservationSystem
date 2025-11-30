@@ -44,6 +44,7 @@ public class FlightAgentGUI extends JFrame {
     private JTable bookingTable;
     private DefaultTableModel bookingTableModel;
     private JButton createBookingButton;
+    private JButton editBookingButton;
     private JButton cancelBookingButton;
     private JButton refreshBookingsButton;
 
@@ -209,21 +210,24 @@ public class FlightAgentGUI extends JFrame {
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         createBookingButton = new JButton("Create New Booking");
+        editBookingButton = new JButton("Edit Booking");
         cancelBookingButton = new JButton("Cancel Booking");
         refreshBookingsButton = new JButton("Refresh Bookings");
 
         createBookingButton.addActionListener(new CreateBookingListener());
+        editBookingButton.addActionListener(new EditBookingListener());
         cancelBookingButton.addActionListener(new CancelBookingListener());
         refreshBookingsButton.addActionListener(e -> refreshBookingsTable());
 
         buttonPanel.add(createBookingButton);
+        buttonPanel.add(editBookingButton);
         buttonPanel.add(cancelBookingButton);
         buttonPanel.add(refreshBookingsButton);
 
         panel.add(buttonPanel, BorderLayout.NORTH);
 
         // Booking table
-        String[] columnNames = {"Booking ID", "Customer", "Flight ID", "Departure", "Arrival", "Seat Number"};
+        String[] columnNames = {"Booking ID", "Customer", "Customer ID", "Flight ID", "Departure", "Arrival", "Seat Number"};
         bookingTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -303,6 +307,7 @@ public class FlightAgentGUI extends JFrame {
                 Object[] row = {
                     booking.getBookingId(),
                     booking.getCustomer().getFirstName() + " " + booking.getCustomer().getLastName(),
+                    booking.getCustomer().getId(),
                     booking.getFlight().getFlightID(),
                     booking.getFlight().getDepartureDate().toString(),
                     booking.getFlight().getArrivalDate().toString(),
@@ -696,6 +701,178 @@ public class FlightAgentGUI extends JFrame {
                     "Error creating booking: " + ex.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private class EditBookingListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int selectedRow = bookingTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                    "Please select a booking to edit.",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                // Get the selected booking details
+                int bookingId = (int) bookingTableModel.getValueAt(selectedRow, 0);
+                
+                // Get the full booking object
+                Booking bookingToEdit = null;
+                ArrayList<Booking> allBookings = bookingController.getAllBookings();
+                for (Booking booking : allBookings) {
+                    if (booking.getBookingId() == bookingId) {
+                        bookingToEdit = booking;
+                        break;
+                    }
+                }
+
+                if (bookingToEdit == null) {
+                    JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                        "Could not find the selected booking.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Get available flights for the combo box
+                ArrayList<Flight> availableFlights = flightController.getAllFlights();
+                
+                // Create edit dialog with more options
+                JPanel editPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+                
+                // Customer info (display only)
+                JTextField customerField = new JTextField(bookingToEdit.getCustomer().getFirstName() + " " + 
+                                                         bookingToEdit.getCustomer().getLastName());
+                customerField.setEditable(false);
+                
+                // Flight selection (editable)
+                JComboBox<Flight> flightCombo = new JComboBox<>(availableFlights.toArray(new Flight[0]));
+                flightCombo.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (value instanceof Flight) {
+                            Flight f = (Flight) value;
+                            String origin = f.getRoute() != null ? f.getRoute().getDepartureLocation().getCity() : "N/A";
+                            String destination = f.getRoute() != null ? f.getRoute().getArrivalLocation().getCity() : "N/A";
+                            setText("Flight " + f.getFlightID() + ": " + origin + " to " + destination + " - " + f.getDepartureDate());
+                        }
+                        return this;
+                    }
+                });
+                
+                // Set current flight as selected
+                for (int i = 0; i < flightCombo.getItemCount(); i++) {
+                    if (flightCombo.getItemAt(i).getFlightID() == bookingToEdit.getFlight().getFlightID()) {
+                        flightCombo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+                
+                // Seat number (editable)
+                JTextField seatField = new JTextField(String.valueOf(bookingToEdit.getSeatNumber()));
+                
+                editPanel.add(new JLabel("Customer:"));
+                editPanel.add(customerField);
+                editPanel.add(new JLabel("Flight:"));
+                editPanel.add(flightCombo);
+                editPanel.add(new JLabel("Seat Number:"));
+                editPanel.add(seatField);
+                editPanel.add(new JLabel("")); // Empty cell
+                editPanel.add(new JLabel("")); // Empty cell
+
+                int option = JOptionPane.showConfirmDialog(FlightAgentGUI.this,
+                    editPanel, 
+                    "Edit Booking - ID: " + bookingId,
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+
+                if (option == JOptionPane.OK_OPTION) {
+                    // Validate inputs
+                    String seatText = seatField.getText().trim();
+                    if (seatText.isEmpty()) {
+                        JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                            "Please enter a seat number.",
+                            "Validation Error",
+                            JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    try {
+                        int newSeatNumber = Integer.parseInt(seatText);
+                        Flight selectedFlight = (Flight) flightCombo.getSelectedItem();
+                        
+                        if (newSeatNumber <= 0) {
+                            JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                                "Seat number must be a positive number.",
+                                "Validation Error",
+                                JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        // Check seat availability on the selected flight
+                        boolean seatTaken = false;
+                        ArrayList<Booking> allBookingsCheck = bookingController.getAllBookings();
+                        for (Booking booking : allBookingsCheck) {
+                            if (booking.getFlight().getFlightID() == selectedFlight.getFlightID() && 
+                                booking.getBookingId() != bookingId && 
+                                booking.getSeatNumber() == newSeatNumber) {
+                                seatTaken = true;
+                                break;
+                            }
+                        }
+
+                        if (seatTaken) {
+                            JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                                "Seat " + newSeatNumber + " is already taken on the selected flight.",
+                                "Seat Unavailable",
+                                JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+
+                        // Check if the selected flight has available seats
+                        if (selectedFlight.getAvailableSeats() <= 0) {
+                            JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                                "The selected flight has no available seats.",
+                                "Flight Full",
+                                JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+
+                        // Update the booking
+                        bookingToEdit.setFlight(selectedFlight);
+                        bookingToEdit.setSeatNumber(newSeatNumber);
+                        bookingController.updateBooking(bookingToEdit);
+
+                        JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                            "Booking updated successfully!\n" +
+                            "New flight: " + selectedFlight.getFlightID() + "\n" +
+                            "New seat number: " + newSeatNumber,
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                        refreshBookingsTable();
+                        refreshFlightsTable(); // Refresh to update seat counts
+
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                            "Please enter a valid number for seat.",
+                            "Invalid Input",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(FlightAgentGUI.this,
+                    "Error editing booking: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
         }
     }

@@ -34,6 +34,13 @@ public class BookingController {
         return db.getAllBookings();
     }
 
+    public void updateBooking(Booking booking) throws SQLException {
+    db.updateBooking(booking.getBookingId(), 
+                    booking.getCustomer().getId(), 
+                    booking.getFlight().getFlightID(), 
+                    booking.getSeatNumber());
+    }
+
 
 
 }
