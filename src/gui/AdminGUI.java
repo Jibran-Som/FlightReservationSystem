@@ -4,17 +4,19 @@ import model.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
 
 
 
 public class AdminGUI extends JFrame {
     private String currentUser;
     private JTabbedPane tabbedPane;
-    private DefaultTableModel flightTableModel;
 
     // Flight Management Components
+    private DefaultTableModel flightTableModel;
     private JTable flightTable;
     private JButton addFlightButton;
     private JButton editFlightButton;
@@ -22,6 +24,7 @@ public class AdminGUI extends JFrame {
     private JButton refreshFlightsButton;
 
     // User Management Components
+    private DefaultTableModel userTableModel;
     private JTable userTable;
     private JButton addUserButton;
     private JButton editUserButton;
@@ -104,8 +107,34 @@ public class AdminGUI extends JFrame {
         panel.add(buttonPanel, BorderLayout.NORTH);
 
         // Flight table
-        String[] columnNames = {"Flight ID", "Airplane ID", "Route ID", "Departure Date", "Arrival Date", "Available Seats", "Flight Length (HH:MM)", "Price"};
-        Object[][] data = db.getAllFlights();
+        String[] columnNames = {"Flight ID", "Airplane ID", "Route ID", "Departure Date", "Arrival Date", "Available Seats", "Length (HH:MM)", "Price"};
+        Object[][] data = {}; // default in case of failure
+
+        try {
+            ArrayList<Flight> flights = db.getAllFlights();
+
+            data = new Object[flights.size()][columnNames.length];
+
+            for (int i = 0; i < flights.size(); i++) {
+                Flight f = flights.get(i);
+
+                data[i] = new Object[]{
+                    f.getFlightID(),
+                    f.getAirplane().getAirplaneID(),
+                    f.getRoute().getRouteID(),
+                    f.getDepartureDate().toSQLDate(),
+                    f.getArrivalDate().toSQLDate(),
+                    f.getAvailableSeats(),
+                    f.getFlightTime(),
+                    f.getPrice(),
+                };
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // optionally: show dialog, log error, etc.
+            System.err.println("Error loading flights from database.");
+        }
         flightTableModel = new DefaultTableModel(data, columnNames);
         flightTable = new JTable(flightTableModel);
         JScrollPane scrollPane = new JScrollPane(flightTable);
@@ -135,8 +164,33 @@ public class AdminGUI extends JFrame {
         panel.add(buttonPanel, BorderLayout.NORTH);
 
         // User table
-        String[] columnNames = {"User ID", "Username", "First Name", "Last Name", "Role", "Email", "Status"};
+        String[] columnNames = {"Username", "User ID", "First Name", "Last Name", "Date of Birth", "Password", "Role", "Email"};
         Object[][] data = {}; // Empty for now
+        try {
+            ArrayList<Flight> flights = db.getAllFlights();
+
+            data = new Object[flights.size()][columnNames.length];
+
+            for (int i = 0; i < flights.size(); i++) {
+                Flight f = flights.get(i);
+
+                data[i] = new Object[]{
+                    f.getFlightID(),
+                    f.getAirplane().getAirplaneID(),
+                    f.getRoute().getRouteID(),
+                    f.getDepartureDate().toSQLDate(),
+                    f.getArrivalDate().toSQLDate(),
+                    f.getAvailableSeats(),
+                    f.getFlightTime(),
+                    f.getPrice(),
+                };
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // optionally: show dialog, log error, etc.
+            System.err.println("Error loading flights from database.");
+        }
         userTable = new JTable(data, columnNames);
         JScrollPane scrollPane = new JScrollPane(userTable);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -302,22 +356,34 @@ public class AdminGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
             flightTableModel.setRowCount(0);
 
-            Object[][] data = db.getAllFlights();
-            for (Object[] row : data) {
-                flightTableModel.addRow(row);
-            }
-
+            ArrayList<Flight> data;
+            try {
+                data = db.getAllFlights();
+                for (Flight f : data) {
+                    Object[] row = {
+                        f.getFlightID(),
+                        f.getAirplane().getAirplaneID(),
+                        f.getRoute().getRouteID(),
+                        f.getDepartureDate().toSQLDate(),
+                        f.getArrivalDate().toSQLDate(),
+                        f.getAvailableSeats(),
+                        f.getFlightTime(),
+                        f.getPrice(),
+                    };
+                    flightTableModel.addRow(row);
+                }
             systemLogArea.append("Flight list refreshed at: " + java.time.LocalDateTime.now() + "\n");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
     private class AddUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Add User functionality will be implemented later.",
-                "Add User",
-                JOptionPane.INFORMATION_MESSAGE);
+            AddUserDialog dialog = new AddUserDialog(AdminGUI.this, userTableModel);
+            dialog.setVisible(true);
         }
     }
 
@@ -442,8 +508,8 @@ public class AdminGUI extends JFrame {
                 int route_id = Integer.parseInt(routeIDField.getText());
                 String departureDate = departureField.getText();
                 String arrivalDate = arrivalField.getText();
-                Date departure = Date.StringToDate(departureDate);
-                Date arrival = Date.StringToDate(arrivalDate);
+                CustomDate departure = CustomDate.StringToDate(departureDate);
+                CustomDate arrival = CustomDate.StringToDate(arrivalDate);
                 int seatsAvailable = Integer.parseInt(seatsField.getText());
                 String flightTime = lengthField.getText();
                 float price = Float.parseFloat(priceField.getText());
@@ -533,8 +599,10 @@ public class AdminGUI extends JFrame {
             try {
                 int airplane_id = Integer.parseInt(airplaneIDField.getText());
                 int route_id = Integer.parseInt(routeIDField.getText());
-                Date departure = Date.StringToDate(departureField.getText());
-                Date arrival = Date.StringToDate(arrivalField.getText());
+                String departureDate = departureField.getText();
+                String arrivalDate = arrivalField.getText();
+                CustomDate departure = CustomDate.StringToDate(departureDate);
+                CustomDate arrival = CustomDate.StringToDate(arrivalDate);
                 int seatsAvailable = Integer.parseInt(seatsField.getText());
                 String flightTime = lengthField.getText();
                 float price = Float.parseFloat(priceField.getText());
@@ -562,6 +630,108 @@ public class AdminGUI extends JFrame {
         }
     }
 
+    private class AddUserDialog extends JDialog {
+        private JTextField usernameField, fNameField, lNameField, dobField, passwordField,
+                roleField, emailField;
+        private DefaultTableModel model;
+
+        public AddUserDialog(JFrame parent, DefaultTableModel model) {
+            super(parent, "Add New User", true);
+            this.model = model;
+            setSize(400, 450);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Username:"));
+            usernameField = new JTextField();
+            formPanel.add(usernameField);
+
+            formPanel.add(new JLabel("First Name:"));
+            fNameField = new JTextField();
+            formPanel.add(fNameField);
+
+            formPanel.add(new JLabel("Last Name:"));
+            lNameField = new JTextField();
+            formPanel.add(lNameField);
+
+            formPanel.add(new JLabel("Date of Birth (YYYY-MM-DD):"));
+            dobField = new JTextField();
+            formPanel.add(dobField);
+
+            formPanel.add(new JLabel("Password:"));
+            passwordField = new JTextField();
+            formPanel.add(passwordField);
+
+            formPanel.add(new JLabel("Role:"));
+            roleField = new JTextField();
+            formPanel.add(roleField);
+
+            formPanel.add(new JLabel("Email:"));
+            emailField = new JTextField();
+            formPanel.add(emailField);
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton saveButton = new JButton("Save User");
+            saveButton.addActionListener(e -> saveUser());
+            add(saveButton, BorderLayout.SOUTH);
+        }
+
+        private void saveUser() {
+            try {
+                String username = usernameField.getText();
+                String fname = fNameField.getText();
+                String lname = lNameField.getText();
+                String dob = dobField.getText();
+                String password = passwordField.getText();
+                String role = passwordField.getText();
+                String email = emailField.getText();
+                int person_id = db.insertPerson(username, fname, lname, dob, password, role);
+                Object[] rowData = null;
+                if(role.equalsIgnoreCase("Customer")){
+                    rowData = new Object[] {
+                        person_id,
+                        username,
+                        fname,
+                        lname,
+                        dob,
+                        password,
+                        role,
+                        email,
+                    };
+                    db.insertCustomer(person_id, email);
+                }
+
+                else if(role.equalsIgnoreCase("Agent")){
+                    rowData = new Object[] {
+                        person_id,
+                        username,
+                        fname,
+                        lname,
+                        dob,
+                        password,
+                        role,
+                        email,
+                    };
+                    db.insertAgent(person_id);
+                }
+                flightTableModel.addRow(rowData);
+
+                JOptionPane.showMessageDialog(this, "User added successfully.");
+                dispose();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid input. Please check the fields.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+            }
+        }
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
