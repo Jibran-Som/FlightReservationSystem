@@ -272,12 +272,15 @@ CREATE ROLE db_admin@localhost, db_agent@localhost, db_customer@localhost;
 
 -- Grant privileges to roles
 GRANT ALL PRIVILEGES ON FLIGHTRESERVE.* TO db_admin@localhost;
-GRANT SELECT, INSERT, DELETE, UPDATE ON FLIGHTRESERVE.* TO db_agent@localhost;
+GRANT SELECT, INSERT, UPDATE, DELETE ON FLIGHTRESERVE.* TO db_agent@localhost;
 GRANT SELECT, INSERT, DELETE ON FLIGHTRESERVE.booking TO db_customer@localhost;
 GRANT SELECT ON FLIGHTRESERVE.flight TO db_customer@localhost;
 GRANT SELECT ON FLIGHTRESERVE.airplane TO db_customer@localhost;
 GRANT SELECT ON FLIGHTRESERVE.route TO db_customer@localhost;
 GRANT SELECT ON FLIGHTRESERVE.address TO db_customer@localhost;
+GRANT SELECT ON FLIGHTRESERVE.airline TO db_customer@localhost;
+GRANT SELECT, UPDATE ON FLIGHTRESERVE.person TO db_customer@localhost;
+GRANT SELECT, UPDATE ON FLIGHTRESERVE.customer TO db_customer@localhost;
 
 -- Drop users if they exist
 DROP USER IF EXISTS admin_user@localhost;
