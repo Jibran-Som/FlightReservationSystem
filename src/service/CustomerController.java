@@ -32,5 +32,7 @@ public class CustomerController {
 
     public void updateCustomer(Customer customer) throws SQLException {
         db.updatePerson(customer);
+        db.updateCustomer(customer.getId(), customer.getEmail());
+
     }
 }
