@@ -383,6 +383,58 @@ public class DatabaseManager {
         return customers;
     }
 
+    public ArrayList<Admin> getAllAdmins() throws SQLException {
+        ArrayList<Admin> admins = new ArrayList<>();
+        String query = "SELECT * FROM person WHERE role = 'Admin'";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                java.sql.Date dob = rs.getDate("date_born");
+                CustomDate dateOfBirth = dob != null ? CustomDate.StringToDate(dob.toString()) : new CustomDate(1900, 1, 1);
+
+                Admin admin = new Admin(
+                    rs.getInt("person_id"),
+                    rs.getString("username"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    dateOfBirth
+                );
+                admins.add(admin);
+            }
+        }
+        return admins;
+    }
+
+    public ArrayList<FlightAgent> getAllAgents() throws SQLException {
+        ArrayList<FlightAgent> agents = new ArrayList<>();
+        String query = "SELECT p.* FROM person p " +
+            "JOIN agent a ON p.person_id = a.agent_id " +
+            "WHERE p.role = 'FlightAgent'";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                java.sql.Date dob = rs.getDate("date_born");
+                CustomDate dateOfBirth = dob != null ? CustomDate.StringToDate(dob.toString()) : new CustomDate(1900, 1, 1);
+
+                FlightAgent agent = new FlightAgent(
+                    rs.getInt("person_id"),
+                    rs.getString("username"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    dateOfBirth,
+                    new ArrayList<>() // Empty clients list - can be populated separately
+                );
+                agents.add(agent);
+            }
+        }
+        return agents;
+    }
+
+
     public ArrayList<Booking> getAllBookings() throws SQLException {
         ArrayList<Booking> bookings = new ArrayList<>();
         String query = "SELECT b.* FROM booking b";
