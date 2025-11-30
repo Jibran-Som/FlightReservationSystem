@@ -168,6 +168,15 @@ public class DatabaseManager {
     insert("promotion", columns, values, false);
     }
 
+    // INSERT METHODS FOR PROMOTIONS
+    public void insertPromotion(String promoCode, int discountRate, String description, CustomDate startDate) throws SQLException {
+        String[] columns = {"promo_code", "discount_rate", "description", "start_date"};
+        java.sql.Date sqlStartDate = java.sql.Date.valueOf(startDate.toSQLDate());
+        Object[] values = {promoCode, discountRate, description, sqlStartDate};
+        insert("promotion", columns, values, false);
+    }
+
+
 
 
     // SELECT METHODS
@@ -464,6 +473,51 @@ public class DatabaseManager {
         return bookings;
     }
 
+    public ArrayList<Promotion> getAllPromotions() throws SQLException {
+        ArrayList<Promotion> promotions = new ArrayList<>();
+        String query = "SELECT * FROM promotion ORDER BY start_date DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                java.sql.Date startDate = rs.getDate("start_date");
+                CustomDate promoStartDate = startDate != null ? CustomDate.StringToDate(startDate.toString()) : null;
+
+                Promotion promotion = new Promotion(
+                    rs.getString("promo_code"),
+                    rs.getInt("discount_rate"),
+                    rs.getString("description"),
+                    promoStartDate
+                );
+                promotions.add(promotion);
+            }
+        }
+        return promotions;
+    }
+
+    public Promotion getPromotionByCode(String promoCode) throws SQLException {
+        String query = "SELECT * FROM promotion WHERE promo_code = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, promoCode);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                java.sql.Date startDate = rs.getDate("start_date");
+                CustomDate promoStartDate = startDate != null ? CustomDate.StringToDate(startDate.toString()) : null;
+
+                return new Promotion(
+                    rs.getString("promo_code"),
+                    rs.getInt("discount_rate"),
+                    rs.getString("description"),
+                    promoStartDate
+                );
+            }
+        }
+        return null;
+    }
+
     public Customer getCustomerById(int customerId) throws SQLException {
         String query = "SELECT p.person_id, p.username, p.first_name, p.last_name, p.date_born, c.email " +
             "FROM person p JOIN customer c ON p.person_id = c.customer_id " +
@@ -522,6 +576,15 @@ public class DatabaseManager {
         String whereClause = "person_id = ?";
         Object[] whereValues = {person.getId()};
         return update("person", columns, values, whereClause, whereValues);
+    }
+
+    public int updatePromotion(String promoCode, int discountRate, String description, CustomDate startDate) throws SQLException {
+        String[] columns = {"discount_rate", "description", "start_date"};
+        java.sql.Date sqlStartDate = java.sql.Date.valueOf(startDate.toSQLDate());
+        Object[] values = {discountRate, description, sqlStartDate};
+        String whereClause = "promo_code = ?";
+        Object[] whereValues = {promoCode};
+        return update("promotion", columns, values, whereClause, whereValues);
     }
 
     public int updateCustomer(int customerId, String email) throws SQLException {
@@ -620,6 +683,10 @@ public class DatabaseManager {
             }
             return pstmt.executeUpdate();
         }
+    }
+
+    public int deletePromotion(String promoCode) throws SQLException {
+        return delete("promotion", "promo_code = ?", new Object[]{promoCode});
     }
 
     public int deleteFlight(int flightId) throws SQLException {

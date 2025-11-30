@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 public class CustomerGUI extends JFrame {
     private String currentUser;
     private Customer currentCustomer;
-    
+
     // Controllers
     private FlightController flightController;
     private CustomerController customerController;
@@ -51,8 +51,8 @@ public class CustomerGUI extends JFrame {
     public CustomerGUI(String username) {
         this.currentUser = username;
         initializeControllers();
-        initializeGUI();
         loadCustomerData();
+        initializeGUI();
         loadInitialData();
     }
 
@@ -61,14 +61,14 @@ public class CustomerGUI extends JFrame {
         this.flightController = new FlightController();
         this.customerController = new CustomerController();
         this.bookingController = new BookingController();
-        
+
         // Connect to database
         try {
             db.connect("customer_user", "customer_password");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
+            JOptionPane.showMessageDialog(this,
                 "Database connection failed: " + e.getMessage(),
-                "Connection Error", 
+                "Connection Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -83,7 +83,7 @@ public class CustomerGUI extends JFrame {
                     break;
                 }
             }
-            
+
             if (currentCustomer == null) {
                 JOptionPane.showMessageDialog(this,
                     "Could not load customer data for: " + currentUser,
@@ -110,7 +110,7 @@ public class CustomerGUI extends JFrame {
 
         // Create header
         JPanel headerPanel = new JPanel(new BorderLayout());
-        String welcomeName = currentCustomer != null ? 
+        String welcomeName = currentCustomer != null ?
             currentCustomer.getFirstName() + " " + currentCustomer.getLastName() : currentUser;
         JLabel welcomeLabel = new JLabel("Welcome, " + welcomeName + "!");
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -160,16 +160,16 @@ public class CustomerGUI extends JFrame {
         searchPanel.add(dateField);
 
         searchPanel.add(new JLabel("")); // Empty label for spacing
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout());
         searchFlightsButton = new JButton("Search Flights");
         searchFlightsButton.addActionListener(new SearchFlightsListener());
         buttonPanel.add(searchFlightsButton);
-        
+
         clearSearchButton = new JButton("Clear");
         clearSearchButton.addActionListener(e -> clearSearchFields());
         buttonPanel.add(clearSearchButton);
-        
+
         searchPanel.add(buttonPanel);
 
         panel.add(searchPanel, BorderLayout.NORTH);
@@ -295,7 +295,7 @@ public class CustomerGUI extends JFrame {
             if (currentCustomer == null) return;
 
             ArrayList<Booking> allBookings = bookingController.getAllBookings();
-            
+
             for (Booking booking : allBookings) {
                 if (booking.getCustomer().getId() == currentCustomer.getId()) {
                     Flight flight = booking.getFlight();
@@ -318,9 +318,9 @@ public class CustomerGUI extends JFrame {
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
+            JOptionPane.showMessageDialog(this,
                 "Error loading bookings: " + e.getMessage(),
-                "Error", 
+                "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -473,7 +473,7 @@ public class CustomerGUI extends JFrame {
                 if (seatNumberStr != null && !seatNumberStr.trim().isEmpty()) {
                     try {
                         int seatNumber = Integer.parseInt(seatNumberStr.trim());
-                        
+
                         // Basic seat validation
                         if (seatNumber <= 0 || seatNumber > 500) {
                             JOptionPane.showMessageDialog(CustomerGUI.this,
@@ -497,7 +497,7 @@ public class CustomerGUI extends JFrame {
                         boolean seatTaken = false;
                         ArrayList<Booking> allBookings = bookingController.getAllBookings();
                         for (Booking booking : allBookings) {
-                            if (booking.getFlight().getFlightID() == flightId && 
+                            if (booking.getFlight().getFlightID() == flightId &&
                                 booking.getSeatNumber() == seatNumber) {
                                 seatTaken = true;
                                 break;
@@ -544,10 +544,10 @@ public class CustomerGUI extends JFrame {
                                 JOptionPane.showMessageDialog(CustomerGUI.this,
                                     "Paid via Credit Card: $" + price,
                                     "Payment Successful",
-                                    JOptionPane.INFORMATION_MESSAGE);                           
+                                    JOptionPane.INFORMATION_MESSAGE);
                             }
                         }
-    
+
                         else if(choice == 1){
                             PayPalPaymentDialog ppDialog = new PayPalPaymentDialog(CustomerGUI.this);
                             ppDialog.setVisible(true);
@@ -569,12 +569,12 @@ public class CustomerGUI extends JFrame {
                                 JOptionPane.showMessageDialog(CustomerGUI.this,
                                     "Paid via PayPal: $" + price,
                                     "Payment Successful",
-                                    JOptionPane.INFORMATION_MESSAGE);                           
+                                    JOptionPane.INFORMATION_MESSAGE);
                             }
                         }
                         // Create the booking
                         Booking newBooking = bookingController.createBooking(currentCustomer, selectedFlight, seatNumber);
-                        
+
                         JOptionPane.showMessageDialog(CustomerGUI.this,
                             "Booking confirmed!\n\n" +
                             "Booking ID: " + newBooking.getBookingId() + "\n" +
@@ -619,8 +619,8 @@ public class CustomerGUI extends JFrame {
             }
 
             int bookingId = (int) bookingsTableModel.getValueAt(selectedRow, 0);
-            String flightInfo = "Flight " + bookingsTableModel.getValueAt(selectedRow, 1) + 
-                              " - " + bookingsTableModel.getValueAt(selectedRow, 3) + 
+            String flightInfo = "Flight " + bookingsTableModel.getValueAt(selectedRow, 1) +
+                              " - " + bookingsTableModel.getValueAt(selectedRow, 3) +
                               " to " + bookingsTableModel.getValueAt(selectedRow, 4);
 
             int confirm = JOptionPane.showConfirmDialog(CustomerGUI.this,
@@ -635,7 +635,7 @@ public class CustomerGUI extends JFrame {
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     bookingController.cancelBooking(bookingId);
-                    
+
                     JOptionPane.showMessageDialog(CustomerGUI.this,
                         "Booking cancelled successfully!",
                         "Cancellation Confirmed",
@@ -693,14 +693,14 @@ public class CustomerGUI extends JFrame {
                 currentCustomer.setFirstName(firstName);
                 currentCustomer.setLastName(lastName);
                 currentCustomer.setEmail(email);
-                
+
                 if (!dob.isEmpty()) {
                     currentCustomer.setDoB(CustomDate.StringToDate(dob));
                 }
 
                 // Update in database
                 customerController.updateCustomer(currentCustomer);
-                
+
                 JOptionPane.showMessageDialog(CustomerGUI.this,
                     "Profile updated successfully!",
                     "Profile Updated",
@@ -885,7 +885,7 @@ public class PayPalPaymentDialog extends JDialog {
 
     public String getCvv() {
         return cvvField.getText().trim();
-    }    
+    }
 
     private boolean isConfirmed(){
         return this.isConfirmed;
