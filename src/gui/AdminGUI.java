@@ -1,13 +1,14 @@
 package gui;
 import backend.*;
-import model.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
+import model.*;
 
 
 
@@ -135,7 +136,12 @@ public class AdminGUI extends JFrame {
             // optionally: show dialog, log error, etc.
             System.err.println("Error loading flights from database.");
         }
-        flightTableModel = new DefaultTableModel(data, columnNames);
+        flightTableModel = new DefaultTableModel(data, columnNames){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table non-editable
+            }
+        };
         flightTable = new JTable(flightTableModel);
         JScrollPane scrollPane = new JScrollPane(flightTable);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -164,34 +170,87 @@ public class AdminGUI extends JFrame {
         panel.add(buttonPanel, BorderLayout.NORTH);
 
         // User table
-        String[] columnNames = {"Username", "User ID", "First Name", "Last Name", "Date of Birth", "Password", "Role", "Email"};
+        String[] columnNames = {"User ID", "Username", "First Name", "Last Name", "Date of Birth", "Role", "Email"};
         Object[][] data = {}; // Empty for now
         try {
-            ArrayList<Flight> flights = db.getAllFlights();
+            ArrayList<Object> people = new ArrayList<>();
+            ArrayList<Customer> customers = db.getAllCustomers();
+            ArrayList<Admin> admins = db.getAllAdmins();
+            ArrayList<FlightAgent> agents = db.getAllAgents();
+            people.addAll(customers);
+            people.addAll(admins);
+            people.addAll(agents);
 
-            data = new Object[flights.size()][columnNames.length];
-
-            for (int i = 0; i < flights.size(); i++) {
-                Flight f = flights.get(i);
-
-                data[i] = new Object[]{
-                    f.getFlightID(),
-                    f.getAirplane().getAirplaneID(),
-                    f.getRoute().getRouteID(),
-                    f.getDepartureDate().toSQLDate(),
-                    f.getArrivalDate().toSQLDate(),
-                    f.getAvailableSeats(),
-                    f.getFlightTime(),
-                    f.getPrice(),
-                };
+            people.sort(new Comparator<Object>() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                int id1 = getId(o1);
+                int id2 = getId(o2);
+                return Integer.compare(id1, id2);
             }
 
+            private int getId(Object obj) {
+                if (obj instanceof Customer) {
+                    return ((Customer) obj).getId();
+                } else if (obj instanceof Admin) {
+                    return ((Admin) obj).getId();
+                } else if (obj instanceof FlightAgent) {
+                    return ((FlightAgent) obj).getId();
+                } else {
+                    return 0;
+                }
+            }
+        });
+            data = new Object[people.size()][columnNames.length];
+
+            for (int i = 0; i < people.size(); i++) {
+                Object p = people.get(i);
+                if(p instanceof Customer){
+                    data[i] = new Object[]{
+                        ((Customer) p).getId(),
+                        ((Customer) p).getUsername(),
+                        ((Customer) p).getFirstName(),
+                        ((Customer) p).getLastName(),
+                        ((Customer) p).getDoB().toSQLDate(),
+                        "Customer",
+                        ((Customer) p).getEmail()
+                    };
+                }
+                else if(p instanceof FlightAgent){
+                    data[i] = new Object[]{
+                        ((FlightAgent) p).getId(),
+                        ((FlightAgent) p).getUsername(),
+                        ((FlightAgent) p).getFirstName(),
+                        ((FlightAgent) p).getLastName(),
+                        ((FlightAgent) p).getDoB().toSQLDate(),
+                        "FlightAgent",
+                        ""
+                    };
+                }
+                else if(p instanceof Admin){
+                    data[i] = new Object[]{
+                        ((Admin) p).getId(),
+                        ((Admin) p).getUsername(),
+                        ((Admin) p).getFirstName(),
+                        ((Admin) p).getLastName(),
+                        ((Admin) p).getDoB().toSQLDate(),
+                        "Admin",
+                        ""
+                    };
+                }
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             // optionally: show dialog, log error, etc.
             System.err.println("Error loading flights from database.");
         }
-        userTable = new JTable(data, columnNames);
+        userTableModel = new DefaultTableModel(data, columnNames){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table non-editable
+            }
+        };
+        userTable = new JTable(userTableModel);
         JScrollPane scrollPane = new JScrollPane(userTable);
         panel.add(scrollPane, BorderLayout.CENTER);
 
@@ -390,20 +449,110 @@ public class AdminGUI extends JFrame {
     private class EditUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Edit User functionality will be implemented later.",
-                "Edit User",
-                JOptionPane.INFORMATION_MESSAGE);
+            int selectedRow = userTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Please select a user to edit.",
+                        "No Selection",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Pass selected row data to the dialog
+            Object personID = userTableModel.getValueAt(selectedRow, 0);
+            Object username = userTableModel.getValueAt(selectedRow, 1);
+            Object fname = userTableModel.getValueAt(selectedRow, 2);
+            Object lname = userTableModel.getValueAt(selectedRow, 3);
+            Object dob = userTableModel.getValueAt(selectedRow, 4);
+            Object role = userTableModel.getValueAt(selectedRow, 5);
+            Object email = userTableModel.getValueAt(selectedRow, 6);
+
+            EditUserDialog editDialog = new EditUserDialog(
+                    AdminGUI.this,
+                    userTableModel,
+                    selectedRow,
+                    personID,
+                    username,
+                    fname,
+                    lname,
+                    dob,
+                    role,
+                    email
+            );
+
+            editDialog.setVisible(true);
         }
     }
 
     private class RemoveUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+        try {
+            int selectedRow = userTable.getSelectedRow();
+
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Please select a user to remove.",
+                        "No Selection",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(AdminGUI.this,
+                    "Are you sure you want to delete this user?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            int personID = (int) userTableModel.getValueAt(selectedRow, 0);
+            String role = (String) userTableModel.getValueAt(selectedRow, 5);
+            int result = 0; 
+            if(role.equalsIgnoreCase("Customer")){
+                result = db.deleteCustomer(personID);
+            }
+
+            else if(role.equalsIgnoreCase("FlightAgent")){
+                result = db.deleteAgent(personID);
+            }
+
+            else if(role.equalsIgnoreCase("Admin")){
+                result = db.deletePerson(personID);
+            }
+
+            if (result >= 1) {
+                userTableModel.removeRow(selectedRow);
+
+                systemLogArea.append("Deleted person ID " + personID +
+                        " at " + java.time.LocalDateTime.now() + "\n");
+
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "User deleted successfully.",
+                        "Flight Removed",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+            } else if (result == 0) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "No user was deleted. They may not exist.",
+                        "Delete Failed",
+                        JOptionPane.WARNING_MESSAGE);
+
+            } else {  // result == -1
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "A database error occurred while deleting the user.",
+                        "SQL Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
             JOptionPane.showMessageDialog(AdminGUI.this,
-                "Remove User functionality will be implemented later.",
-                "Remove User",
-                JOptionPane.INFORMATION_MESSAGE);
+                    "An unexpected error occurred while trying to delete the flight.\n" +
+                    "Check console/logs for more details.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -631,7 +780,7 @@ public class AdminGUI extends JFrame {
     }
 
     private class AddUserDialog extends JDialog {
-        private JTextField usernameField, fNameField, lNameField, dobField, passwordField,
+        private JTextField usernameField, fNameField, lNameField, dobField,
                 roleField, emailField;
         private DefaultTableModel model;
 
@@ -661,10 +810,6 @@ public class AdminGUI extends JFrame {
             dobField = new JTextField();
             formPanel.add(dobField);
 
-            formPanel.add(new JLabel("Password:"));
-            passwordField = new JTextField();
-            formPanel.add(passwordField);
-
             formPanel.add(new JLabel("Role:"));
             roleField = new JTextField();
             formPanel.add(roleField);
@@ -686,10 +831,9 @@ public class AdminGUI extends JFrame {
                 String fname = fNameField.getText();
                 String lname = lNameField.getText();
                 String dob = dobField.getText();
-                String password = passwordField.getText();
-                String role = passwordField.getText();
+                String role = roleField.getText();
                 String email = emailField.getText();
-                int person_id = db.insertPerson(username, fname, lname, dob, password, role);
+                int person_id = db.insertPerson(username, fname, lname, dob, role);
                 Object[] rowData = null;
                 if(role.equalsIgnoreCase("Customer")){
                     rowData = new Object[] {
@@ -698,7 +842,6 @@ public class AdminGUI extends JFrame {
                         fname,
                         lname,
                         dob,
-                        password,
                         role,
                         email,
                     };
@@ -712,13 +855,24 @@ public class AdminGUI extends JFrame {
                         fname,
                         lname,
                         dob,
-                        password,
                         role,
-                        email,
+                        "",
                     };
                     db.insertAgent(person_id);
                 }
-                flightTableModel.addRow(rowData);
+                else if(role.equalsIgnoreCase("Admin")){
+                    rowData = new Object[] {
+                        person_id,
+                        username,
+                        fname,
+                        lname,
+                        dob,
+                        role,
+                        "",
+                    };
+
+                }
+                userTableModel.addRow(rowData);
 
                 JOptionPane.showMessageDialog(this, "User added successfully.");
                 dispose();
@@ -729,6 +883,98 @@ public class AdminGUI extends JFrame {
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
                         ex.printStackTrace();
+            }
+        }
+    }
+
+private class EditUserDialog extends JDialog {
+        private JTextField usernameField, fNameField, lNameField, dobField, emailField;
+        private DefaultTableModel model;
+        private int rowIndex;
+        private Object personID;
+        private String role;
+
+        public EditUserDialog(JFrame parent, DefaultTableModel model, int rowIndex,
+                                Object personID, Object username, Object fName, Object lName, Object dob, Object role, Object email) {
+            super(parent, "Edit User", true);
+            this.model = model;
+            this.rowIndex = rowIndex;
+            this.personID = personID;
+            this.role = (String) role;
+
+            setSize(400, 450);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Username:"));
+            usernameField = new JTextField(username.toString());
+            formPanel.add(usernameField);
+
+            formPanel.add(new JLabel("First Name:"));
+            fNameField = new JTextField(fName.toString());
+            formPanel.add(fNameField);
+
+            formPanel.add(new JLabel("Last Name:"));
+            lNameField = new JTextField(lName.toString());
+            formPanel.add(lNameField);
+
+            formPanel.add(new JLabel("Date of Birth (YYYY-MM-DD):"));
+            dobField = new JTextField(dob.toString());
+            formPanel.add(dobField);
+            
+            if(role.equals("Customer")){
+                formPanel.add(new JLabel("Email:"));
+                emailField = new JTextField(email.toString());
+                formPanel.add(emailField);
+            }
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton updateButton = new JButton("Update User");
+            updateButton.addActionListener(e -> updateUser());
+            add(updateButton, BorderLayout.SOUTH);
+        }
+
+        private void updateUser() {
+            try {
+                String username = usernameField.getText();
+                String fName = fNameField.getText();
+                String lName = lNameField.getText();
+                String dob = dobField.getText();
+                String email = "";
+                CustomDate dateOfBirth = CustomDate.StringToDate(dob);
+                if(this.role.equals("Customer")){
+                    email = emailField.getText();
+                    Customer c = new Customer((int)personID, username, fName, lName, dateOfBirth, email);
+                    db.updateCustomer((int)personID, email);
+                    db.updatePerson(c);
+                }
+                else if(this.role.equals("FlightAgent")){
+                    FlightAgent fa = new FlightAgent((int)personID, username, fName, lName, dateOfBirth, null);
+                    db.updatePerson(fa);
+                }
+                else if(this.role.equals("Admin")){
+                    Admin a = new Admin((int)personID, username, fName, lName, dateOfBirth);
+                    db.updatePerson(a);
+                }
+                // Update table
+                model.setValueAt(username, rowIndex, 1);
+                model.setValueAt(fName, rowIndex, 2);
+                model.setValueAt(lName, rowIndex, 3);
+                model.setValueAt(dob, rowIndex, 4);
+                model.setValueAt(email, rowIndex, 6);
+
+                JOptionPane.showMessageDialog(this, "User updated successfully.");
+                dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid input. Please check the fields.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
         }
     }
