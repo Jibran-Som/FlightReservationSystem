@@ -1,7 +1,7 @@
 // Customer.java
 package model;
 
-public class Customer extends Person {
+public class Customer extends Person implements PromotionObserver {
     private Address address;
     private String email;
     private String phoneNumber;
@@ -31,6 +31,7 @@ public class Customer extends Person {
     public Address getAddress() { return address; }
     public String getEmail() { return email; }
     public String getPhoneNumber() { return phoneNumber; }
+    public PaymentStrategy getPaymentStrategy() { return paymentStrategy; }
 
     public void setAddress(Address address) { this.address = address; }
     public void setEmail(String email) { this.email = email; }
@@ -40,6 +41,15 @@ public class Customer extends Person {
     public String processPayment(double amount){
         return paymentStrategy.pay(amount);
     }
+
+
+    @Override
+    public void update(Promotion promotion) {
+        System.out.println("Customer " + getUsername() + " received promotion: " + 
+            promotion.getPromoCode() + " - " + promotion.getDescription());
+    }
+
+
     @Override
     public String toString() {
         return "Customer{id=" + getId() + ", username='" + getUsername() + "', firstName='" + getFirstName() + 

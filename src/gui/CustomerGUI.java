@@ -535,7 +535,7 @@ public class CustomerGUI extends JFrame {
                             String payed = currentCustomer.processPayment(price);
                             if(payed.equals("Failed")){
                                 JOptionPane.showMessageDialog(CustomerGUI.this,
-                                "Payment failed.",
+                                "Payment failed. Please try again.",
                                 "Payment Failure",
                                 JOptionPane.WARNING_MESSAGE);
                                 return;
@@ -560,7 +560,7 @@ public class CustomerGUI extends JFrame {
                             String payed = currentCustomer.processPayment(price);
                             if(payed.equals("Failed")){
                                 JOptionPane.showMessageDialog(CustomerGUI.this,
-                                "Payment failed.",
+                                "Payment failed. Please try again.",
                                 "Payment Failure",
                                 JOptionPane.WARNING_MESSAGE);
                                 return;

@@ -111,6 +111,14 @@ CREATE TABLE booking (
                          FOREIGN KEY (flight_id) REFERENCES flight(flight_id)
 );
 
+DROP TABLE IF EXISTS promotion;
+
+CREATE TABLE promotion (
+    promo_code VARCHAR(20) PRIMARY KEY,
+    discount_rate FLOAT NOT NULL,
+    description VARCHAR(255),
+    start_date DATE
+);
 
 
 
@@ -246,6 +254,12 @@ INSERT INTO flight (airplane_id, route_id, departure_date, arrival_date, availab
                                                                                                                     (9, 19, '2025-01-01', '2025-01-01', 180, '09:15', 1099.99),
                                                                                                                     (1, 20, '2025-01-02', '2025-01-02', 150, '09:15', 1079.99);
 
+-- Insert sample promotions
+INSERT INTO promotion (promo_code, discount_rate, description, start_date) VALUES
+                                                                                        ('WELCOME20', 0.20, 'Welcome discount for new customers', '2025-01-01'),
+                                                                                        ('SUMMER15', 0.15, 'Summer season promotion', '2025-08-31'),
+                                                                                        ('FLYAGAIN10', 0.10, 'Discount for returning customers', '2025-01-01');
+
 -- Verify data insertion
 SELECT 'Data insertion completed successfully!' as Status;
 
@@ -260,8 +274,8 @@ UNION ALL SELECT 'airplane', COUNT(*) FROM airplane
 UNION ALL SELECT 'address', COUNT(*) FROM address
 UNION ALL SELECT 'route', COUNT(*) FROM route
 UNION ALL SELECT 'flight', COUNT(*) FROM flight
-UNION ALL SELECT 'booking', COUNT(*) FROM booking;
-
+UNION ALL SELECT 'booking', COUNT(*) FROM booking
+UNION ALL SELECT 'promotion', COUNT(*) FROM promotion;
 
 
 -- Drop roles if they exist
