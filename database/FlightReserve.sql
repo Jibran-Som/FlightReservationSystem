@@ -152,11 +152,15 @@ INSERT INTO agent_customer (agent_id, customer_id) VALUES
 
 -- Insert into airline
 INSERT INTO airline (airline_name) VALUES
-                                       ('SkyWings Airlines'),
-                                       ('Global Airways'),
+
+                                       ('Delta'),
+                                       ('Spirit Airlines'),
+                                       ('Qatar Airways'),
+                                       ('AirCanada'),
+                                       ('Emirates'),
                                        ('Pacific Express'),
-                                       ('Northern Star'),
-                                       ('Sunset Airlines');
+                                       ('WestJet'),
+                                       ('RyanAir');
 
 -- Insert into address (airport addresses)
 INSERT INTO address (postal_code, number, street, city, state, country) VALUES
@@ -173,15 +177,15 @@ INSERT INTO address (postal_code, number, street, city, state, country) VALUES
 
 -- Insert into airplane
 INSERT INTO airplane (airline_name, name, flight_number) VALUES
-                                                             ('SkyWings Airlines', 'Boeing 737', 101),
-                                                             ('SkyWings Airlines', 'Airbus A320', 102),
-                                                             ('Global Airways', 'Boeing 777', 201),
-                                                             ('Global Airways', 'Airbus A330', 202),
-                                                             ('Pacific Express', 'Boeing 787', 301),
-                                                             ('Pacific Express', 'Airbus A350', 302),
-                                                             ('Northern Star', 'Bombardier CRJ', 401),
-                                                             ('Northern Star', 'Embraer E175', 402),
-                                                             ('Sunset Airlines', 'Airbus A320', 501);
+                                                             ('Spirit Airlines', 'Boeing 737', 101),
+                                                             ('Spirit Airlines', 'Airbus A320', 102),
+                                                             ('Qatar Airways', 'Boeing 777', 201),
+                                                             ('Qatar Airways', 'Airbus A330', 202),
+                                                             ('WestJet', 'Boeing 787', 301),
+                                                             ('WestJet', 'Airbus A350', 302),
+                                                             ('Spirit Airlines', 'Bombardier CRJ', 401),
+                                                             ('Emirates', 'Embraer E175', 402),
+                                                             ('Emirates', 'Airbus A320', 501);
 
 -- Insert into route
 INSERT INTO route (origin_id, destination_id) VALUES
