@@ -724,15 +724,15 @@ public class AdminGUI extends JFrame {
                 return;
             }
 
-            Object routeID = routeTableModel.getValueAt(selectedRow, 0);
-            EditRouteDialog editDialog = new EditRouteDialog(
-                    AdminGUI.this,
-                    routeTableModel,
-                    selectedRow,
-                    routeID
-            );
+            // Object routeID = routeTableModel.getValueAt(selectedRow, 0);
+            // EditRouteDialog editDialog = new EditRouteDialog(
+            //         AdminGUI.this,
+            //         routeTableModel,
+            //         selectedRow,
+            //         routeID
+            // );
 
-            editDialog.setVisible(true);
+            // editDialog.setVisible(true);
         }
     }
 
@@ -1537,6 +1537,7 @@ public class AdminGUI extends JFrame {
     }
 
     // Route Dialog Classes
+    // Replace the AddRouteDialog class with this improved version
     private class AddRouteDialog extends JDialog {
         private JTextField originStreetField, originNumberField, originPostalField, originCityField, originStateField, originCountryField;
         private JTextField destStreetField, destNumberField, destPostalField, destCityField, destStateField, destCountryField;
@@ -1545,72 +1546,159 @@ public class AdminGUI extends JFrame {
         public AddRouteDialog(JFrame parent, DefaultTableModel model) {
             super(parent, "Add New Route", true);
             this.model = model;
-            setSize(500, 500);
+            setSize(600, 550); // Slightly larger for better spacing
             setLocationRelativeTo(parent);
-            setLayout(new BorderLayout());
+            setLayout(new BorderLayout(10, 10));
 
-            JPanel formPanel = new JPanel(new GridLayout(13, 2, 10, 10));
-            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+            // Main panel with padding
+            JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+            mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-            formPanel.add(new JLabel("=== ORIGIN ==="));
-            formPanel.add(new JLabel(""));
+            // Create tabbed pane for Origin and Destination
+            JTabbedPane tabbedPane = new JTabbedPane();
             
-            formPanel.add(new JLabel("Street:"));
-            originStreetField = new JTextField();
-            formPanel.add(originStreetField);
-
-            formPanel.add(new JLabel("Number:"));
-            originNumberField = new JTextField();
-            formPanel.add(originNumberField);
-
-            formPanel.add(new JLabel("Postal Code:"));
-            originPostalField = new JTextField();
-            formPanel.add(originPostalField);
-
-            formPanel.add(new JLabel("City:"));
-            originCityField = new JTextField();
-            formPanel.add(originCityField);
-
-            formPanel.add(new JLabel("State:"));
-            originStateField = new JTextField();
-            formPanel.add(originStateField);
-
-            formPanel.add(new JLabel("Country:"));
-            originCountryField = new JTextField();
-            formPanel.add(originCountryField);
-
-            formPanel.add(new JLabel("=== DESTINATION ==="));
-            formPanel.add(new JLabel(""));
+            // Origin Tab
+            JPanel originPanel = createAddressPanel("Origin");
+            tabbedPane.addTab("Origin", originPanel);
             
-            formPanel.add(new JLabel("Street:"));
-            destStreetField = new JTextField();
-            formPanel.add(destStreetField);
-
-            formPanel.add(new JLabel("Number:"));
-            destNumberField = new JTextField();
-            formPanel.add(destNumberField);
-
-            formPanel.add(new JLabel("Postal Code:"));
-            destPostalField = new JTextField();
-            formPanel.add(destPostalField);
-
-            formPanel.add(new JLabel("City:"));
-            destCityField = new JTextField();
-            formPanel.add(destCityField);
-
-            formPanel.add(new JLabel("State:"));
-            destStateField = new JTextField();
-            formPanel.add(destStateField);
-
-            formPanel.add(new JLabel("Country:"));
-            destCountryField = new JTextField();
-            formPanel.add(destCountryField);
-
-            add(formPanel, BorderLayout.CENTER);
-
+            // Destination Tab
+            JPanel destPanel = createAddressPanel("Destination");
+            tabbedPane.addTab("Destination", destPanel);
+            
+            mainPanel.add(tabbedPane, BorderLayout.CENTER);
+            
+            // Button panel at the bottom
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(e -> dispose());
+            
             JButton saveButton = new JButton("Save Route");
             saveButton.addActionListener(e -> saveRoute());
-            add(saveButton, BorderLayout.SOUTH);
+            
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(saveButton);
+            
+            mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+            
+            add(mainPanel);
+        }
+        
+        private JPanel createAddressPanel(String type) {
+            JPanel panel = new JPanel(new GridBagLayout());
+            panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            
+            // Header
+            JLabel headerLabel = new JLabel(type + " Address");
+            headerLabel.setFont(headerLabel.getFont().deriveFont(Font.BOLD, 14f));
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            gbc.insets = new Insets(0, 0, 15, 0);
+            panel.add(headerLabel, gbc);
+            
+            gbc.gridwidth = 1;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            
+            // Street
+            gbc.gridy = 1;
+            gbc.gridx = 0;
+            panel.add(new JLabel("Street:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originStreetField = new JTextField(20);
+                panel.add(originStreetField, gbc);
+            } else {
+                destStreetField = new JTextField(20);
+                panel.add(destStreetField, gbc);
+            }
+            
+            // Number
+            gbc.gridy = 2;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            panel.add(new JLabel("Number:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originNumberField = new JTextField(10);
+                panel.add(originNumberField, gbc);
+            } else {
+                destNumberField = new JTextField(10);
+                panel.add(destNumberField, gbc);
+            }
+            
+            // Postal Code
+            gbc.gridy = 3;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            panel.add(new JLabel("Postal Code:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originPostalField = new JTextField(10);
+                panel.add(originPostalField, gbc);
+            } else {
+                destPostalField = new JTextField(10);
+                panel.add(destPostalField, gbc);
+            }
+            
+            // City
+            gbc.gridy = 4;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            panel.add(new JLabel("City:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originCityField = new JTextField(20);
+                panel.add(originCityField, gbc);
+            } else {
+                destCityField = new JTextField(20);
+                panel.add(destCityField, gbc);
+            }
+            
+            // State/Province
+            gbc.gridy = 5;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            panel.add(new JLabel("State/Province:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originStateField = new JTextField(15);
+                panel.add(originStateField, gbc);
+            } else {
+                destStateField = new JTextField(15);
+                panel.add(destStateField, gbc);
+            }
+            
+            // Country
+            gbc.gridy = 6;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            panel.add(new JLabel("Country:"), gbc);
+            gbc.gridx = 1;
+            gbc.weightx = 1.0;
+            if (type.equals("Origin")) {
+                originCountryField = new JTextField(15);
+                panel.add(originCountryField, gbc);
+            } else {
+                destCountryField = new JTextField(15);
+                panel.add(destCountryField, gbc);
+            }
+            
+            // Add filler to push everything up
+            gbc.gridy = 7;
+            gbc.gridx = 0;
+            gbc.gridwidth = 2;
+            gbc.weighty = 1.0;
+            panel.add(Box.createVerticalGlue(), gbc);
+            
+            return panel;
         }
 
         private void saveRoute() {
@@ -1678,37 +1766,6 @@ public class AdminGUI extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
             }
-        }
-    }
-
-    private class EditRouteDialog extends JDialog {
-        private DefaultTableModel model;
-        private int rowIndex;
-        private Object routeID;
-
-        public EditRouteDialog(JFrame parent, DefaultTableModel model, int rowIndex, Object routeID) {
-            super(parent, "Edit Route", true);
-            this.model = model;
-            this.rowIndex = rowIndex;
-            this.routeID = routeID;
-            
-            setSize(400, 200);
-            setLocationRelativeTo(parent);
-            setLayout(new BorderLayout());
-
-            JPanel messagePanel = new JPanel(new BorderLayout());
-            messagePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            
-            JLabel messageLabel = new JLabel("<html><center>Route editing is not available in this version.<br>" +
-                    "To modify a route, delete it and create a new one.</center></html>");
-            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            messagePanel.add(messageLabel, BorderLayout.CENTER);
-
-            add(messagePanel, BorderLayout.CENTER);
-
-            JButton closeButton = new JButton("Close");
-            closeButton.addActionListener(e -> dispose());
-            add(closeButton, BorderLayout.SOUTH);
         }
     }
 
