@@ -838,6 +838,7 @@ public class AdminGUI extends JFrame {
         }
     }
 
+
     private class EditAirplaneListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -900,7 +901,7 @@ public class AdminGUI extends JFrame {
 
                 db.deleteAirplane(airplaneID);
                 airplaneTableModel.removeRow(selectedRow);
-                
+
                 JOptionPane.showMessageDialog(AdminGUI.this,
                         "Airplane deleted successfully.",
                         "Airplane Removed",

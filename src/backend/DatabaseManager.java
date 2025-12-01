@@ -198,6 +198,8 @@ public class DatabaseManager {
         return addresses;
     }
 
+
+    // SELECT function for airline
     public ArrayList<Airline> getAllAirlines() throws SQLException {
         ArrayList<Airline> airlines = new ArrayList<>();
         String query = "SELECT * FROM airline";
@@ -762,15 +764,52 @@ public class DatabaseManager {
     }
 
     public void deleteAirplane(int airplaneId) throws SQLException {
-        // First get all flights using this airplane
-        ArrayList<Flight> flights = getAllFlights();
-        for (Flight flight : flights) {
-            if (flight.getAirplane() != null && flight.getAirplane().getAirplaneID() == airplaneId) {
-                deleteFlight(flight.getFlightID());
+        try {
+            // Start transaction
+            connection.setAutoCommit(false);
+
+            // 1. Get all flights using this airplane
+            ArrayList<Flight> flights = getAllFlights();
+            ArrayList<Integer> flightIds = new ArrayList<>();
+
+            for (Flight flight : flights) {
+                if (flight.getAirplane() != null && flight.getAirplane().getAirplaneID() == airplaneId) {
+                    flightIds.add(flight.getFlightID());
+                }
+            }
+
+            // 2. For each flight, delete related bookings first
+            for (Integer flightId : flightIds) {
+                // Delete bookings for this flight
+                delete("booking", "flight_id = ?", new Object[]{flightId});
+            }
+
+            // 3. Delete the flights
+            for (Integer flightId : flightIds) {
+                delete("flight", "flight_id = ?", new Object[]{flightId});
+            }
+
+            // 4. Finally delete the airplane
+            delete("airplane", "airplane_id = ?", new Object[]{airplaneId});
+
+            // Commit transaction
+            connection.commit();
+
+        } catch (SQLException e) {
+            // Rollback on error
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            throw e;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException autoCommitEx) {
+                autoCommitEx.printStackTrace();
             }
         }
-
-        delete("airplane", "airplane_id = ?", new Object[]{airplaneId});
     }
 
     public int deleteAddress(int addressId) throws SQLException {
@@ -830,6 +869,18 @@ public class DatabaseManager {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("password");
+            }
+        }
+        return null;
+    }
+
+    public Airline getAirlineByName(String airlineName) throws SQLException {
+        String query = "SELECT * FROM airline WHERE airline_name = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, airlineName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new Airline(rs.getString("airline_name"));
             }
         }
         return null;
