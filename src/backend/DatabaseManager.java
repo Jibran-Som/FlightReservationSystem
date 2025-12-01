@@ -828,6 +828,18 @@ public class DatabaseManager {
     }
 
 
+    public String getPasswordForUser(int personId) throws SQLException {
+        String query = "SELECT password FROM person WHERE person_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setInt(1, personId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("password");
+            }
+        }
+        return null;
+    }
+
 
 
 

@@ -467,18 +467,23 @@ public class AdminGUI extends JFrame {
             Object role = userTableModel.getValueAt(selectedRow, 5);
             Object email = userTableModel.getValueAt(selectedRow, 6);
 
-            EditUserDialog editDialog = new EditUserDialog(
-                    AdminGUI.this,
-                    userTableModel,
-                    selectedRow,
-                    personID,
-                    username,
-                    fname,
-                    lname,
-                    dob,
-                    role,
-                    email
-            );
+            EditUserDialog editDialog = null;
+            try {
+                editDialog = new EditUserDialog(
+                        AdminGUI.this,
+                        userTableModel,
+                        selectedRow,
+                        personID,
+                        username,
+                        fname,
+                        lname,
+                        dob,
+                        role,
+                        email
+                );
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
 
             editDialog.setVisible(true);
         }
@@ -921,7 +926,7 @@ public class AdminGUI extends JFrame {
 
 
     private class EditUserDialog extends JDialog {
-        private JTextField usernameField, fNameField, lNameField, dobField, emailField;
+        private JTextField usernameField, fNameField, lNameField, dobField, emailField, passfield;
         private JPasswordField currentPasswordField, newPasswordField, confirmPasswordField;
         private DefaultTableModel model;
         private int rowIndex;
@@ -929,7 +934,7 @@ public class AdminGUI extends JFrame {
         private String role;
 
         public EditUserDialog(JFrame parent, DefaultTableModel model, int rowIndex,
-                              Object personID, Object username, Object fName, Object lName, Object dob, Object role, Object email) {
+                              Object personID, Object username, Object fName, Object lName, Object dob, Object role, Object email) throws SQLException {
             super(parent, "Edit User", true);
             this.model = model;
             this.rowIndex = rowIndex;
@@ -961,13 +966,15 @@ public class AdminGUI extends JFrame {
 
 
 
-            formPanel.add(new JLabel("New Password:"));
-            newPasswordField = new JPasswordField();
-            formPanel.add(newPasswordField);
+            formPanel.add(new JLabel("Current Password:"));
+            try {
+                String currentPassword = db.getPasswordForUser((int) personID);
+                passfield = new JTextField(currentPassword);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            formPanel.add(passfield);
 
-            formPanel.add(new JLabel("Confirm Password:"));
-            confirmPasswordField = new JPasswordField();
-            formPanel.add(confirmPasswordField);
 
 
             if(role.equals("Customer")){
@@ -998,8 +1005,7 @@ public class AdminGUI extends JFrame {
                 String lName = lNameField.getText();
                 String dob = dobField.getText();
                 String email = "";
-                String newPassword = new String(newPasswordField.getPassword());
-                String confirmPassword = new String(confirmPasswordField.getPassword());
+                String newPassword = passfield.getText();
                 CustomDate dateOfBirth = CustomDate.StringToDate(dob);
 
                 // Validate basic fields
@@ -1011,25 +1017,8 @@ public class AdminGUI extends JFrame {
                     return;
                 }
 
-                // Validate password if provided
                 if (!newPassword.isEmpty()) {
-                    if (!newPassword.equals(confirmPassword)) {
-                        JOptionPane.showMessageDialog(this,
-                            "New password and confirmation do not match.",
-                            "Password Error",
-                            JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-
-                    if (newPassword.length() < 6) {
-                        int result = JOptionPane.showConfirmDialog(this,
-                            "Password is shorter than 6 characters. Continue anyway?",
-                            "Weak Password",
-                            JOptionPane.YES_NO_OPTION);
-                        if (result != JOptionPane.YES_OPTION) {
-                            return;
-                        }
-                    }
+                    db.updatePasswordDirectly((int)personID, newPassword);
                 }
 
                 // Update person details
