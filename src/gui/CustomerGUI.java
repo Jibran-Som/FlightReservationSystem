@@ -11,6 +11,8 @@ import service.BookingController;
 import service.PromotionManager;
 import model.*;
 import backend.DatabaseManager;
+
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -48,6 +50,7 @@ public class CustomerGUI extends JFrame {
     private JTextField profileEmailField;
     private JTextField profileUsernameField;
     private JTextField profileDobField;
+    private JTextField profilePassField;
     private JButton updateProfileButton;
 
     // Promotions Components
@@ -135,7 +138,7 @@ public class CustomerGUI extends JFrame {
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
 
         JPanel headerButtonPanel = new JPanel(new FlowLayout());
-        
+
         // Subscription toggle button - starts as "Subscribe to Promotions"
         JButton subscriptionButton = new JButton("Subscribe to Promotions");
         subscriptionButton.addActionListener(e -> toggleSubscription(subscriptionButton));
@@ -267,7 +270,7 @@ public class CustomerGUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel formPanel = new JPanel(new GridLayout(6, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(7, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createTitledBorder("Personal Information"));
 
         formPanel.add(new JLabel("Username:"));
@@ -286,6 +289,10 @@ public class CustomerGUI extends JFrame {
         formPanel.add(new JLabel("Email:"));
         profileEmailField = new JTextField();
         formPanel.add(profileEmailField);
+
+        formPanel.add(new JLabel("Current Password:"));
+        profilePassField = new JTextField();
+        formPanel.add(profilePassField);
 
         formPanel.add(new JLabel("Date of Birth (YYYY-MM-DD):"));
         profileDobField = new JTextField();
@@ -316,6 +323,12 @@ public class CustomerGUI extends JFrame {
             profileEmailField.setText(currentCustomer.getEmail());
             if (currentCustomer.getDoB() != null) {
                 profileDobField.setText(currentCustomer.getDoB().toSQLDate());
+            }
+            try {
+                profilePassField.setText(db.getPasswordForUser(currentCustomer.getId()));
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -370,16 +383,16 @@ public class CustomerGUI extends JFrame {
                 button.setText("Subscribe to Promotions");
                 isSubscribed = false;
                 System.out.println("Customer " + currentCustomer.getUsername() + " unsubscribed from promotions");
-                JOptionPane.showMessageDialog(this, 
-                    "You have unsubscribed from promotion notifications.", 
-                    "Unsubscribed", 
+                JOptionPane.showMessageDialog(this,
+                    "You have unsubscribed from promotion notifications.",
+                    "Unsubscribed",
                     JOptionPane.INFORMATION_MESSAGE);
             } else {
                 promotionManager.registerObserver(currentCustomer);
                 button.setText("Unsubscribe from Promotions");
                 isSubscribed = true;
                 System.out.println("Customer " + currentCustomer.getUsername() + " subscribed to promotions");
-                
+
                 // Notify about current promotions when subscribing
                 java.util.List<Promotion> activePromotions = promotionManager.getActivePromotions();
                 if (!activePromotions.isEmpty()) {
@@ -388,10 +401,10 @@ public class CustomerGUI extends JFrame {
                         currentCustomer.update(promotion);
                     }
                 }
-                
-                JOptionPane.showMessageDialog(this, 
-                    "You have subscribed to promotion notifications.", 
-                    "Subscribed", 
+
+                JOptionPane.showMessageDialog(this,
+                    "You have subscribed to promotion notifications.",
+                    "Subscribed",
                     JOptionPane.INFORMATION_MESSAGE);
             }
         }
@@ -582,12 +595,12 @@ public class CustomerGUI extends JFrame {
                         // Apply promo code
                         double finalPrice = originalPrice;
                         Promotion appliedPromotion = null;
-                        
+
                         String promoCode = JOptionPane.showInputDialog(CustomerGUI.this,
                             "Enter promo code (or leave blank for no discount):",
                             "Promo Code",
                             JOptionPane.QUESTION_MESSAGE);
-                            
+
                         if (promoCode != null && !promoCode.trim().isEmpty()) {
                             appliedPromotion = promotionManager.getPromotionByCode(promoCode.trim());
                             if (appliedPromotion != null) {
@@ -610,8 +623,8 @@ public class CustomerGUI extends JFrame {
 
                         Object[] options = {"Credit Card", "PayPal"};
                         int choice = JOptionPane.showOptionDialog(CustomerGUI.this,
-                            "Final Price: $" + String.format("%.2f", finalPrice) + 
-                            (appliedPromotion != null ? " (with " + (appliedPromotion.getDiscountRate() * 100) + "% discount)" : "") + 
+                            "Final Price: $" + String.format("%.2f", finalPrice) +
+                            (appliedPromotion != null ? " (with " + (appliedPromotion.getDiscountRate() * 100) + "% discount)" : "") +
                             "\nPlease choose a payment method:",
                             "Payment Method",
                             JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
@@ -674,7 +687,7 @@ public class CustomerGUI extends JFrame {
                         Booking newBooking = bookingController.createBooking(currentCustomer, selectedFlight, seatNumber);
 
                         System.out.println("Booking created: ID " + newBooking.getBookingId() + " for customer " + currentCustomer.getUsername());
-                        
+
                         JOptionPane.showMessageDialog(CustomerGUI.this,
                             "Booking confirmed!\n\n" +
                             "Booking ID: " + newBooking.getBookingId() + "\n" +
@@ -773,6 +786,7 @@ public class CustomerGUI extends JFrame {
             String lastName = profileLastNameField.getText().trim();
             String email = profileEmailField.getText().trim();
             String dob = profileDobField.getText().trim();
+            String pass = profilePassField.getText().trim();
 
             // Validation
             if (firstName.isEmpty() || lastName.isEmpty()) {
@@ -799,6 +813,14 @@ public class CustomerGUI extends JFrame {
 
                 if (!dob.isEmpty()) {
                     currentCustomer.setDoB(CustomDate.StringToDate(dob));
+                }
+                if(!pass.isEmpty()) {
+                    try {
+                        db.updatePasswordDirectly(currentCustomer.getId(), pass);
+                    }
+                    catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
                 // Update in database
@@ -829,9 +851,9 @@ public class CustomerGUI extends JFrame {
             // Show available promotions
             StringBuilder promotionsText = new StringBuilder();
             promotionsText.append("=== CURRENT PROMOTIONS ===\n\n");
-            
+
             java.util.List<Promotion> activePromotions = promotionManager.getActivePromotions();
-            
+
             if (activePromotions.isEmpty()) {
                 promotionsText.append("No active promotions at the moment.\n");
                 promotionsText.append("Check back later for special offers!");
@@ -844,19 +866,19 @@ public class CustomerGUI extends JFrame {
                     promotionsText.append("------------------------\n");
                 }
             }
-            
+
             // Add subscription info
             promotionsText.append("\n=== SUBSCRIPTION STATUS ===\n");
             promotionsText.append("You are ").append(isSubscribed ? "SUBSCRIBED" : "NOT SUBSCRIBED");
             promotionsText.append(" to promotion notifications.\n");
-            
+
             JTextArea textArea = new JTextArea(20, 50);
             textArea.setText(promotionsText.toString());
             textArea.setEditable(false);
             textArea.setCaretPosition(0);
-            
+
             JScrollPane scrollPane = new JScrollPane(textArea);
-            JOptionPane.showMessageDialog(CustomerGUI.this, scrollPane, 
+            JOptionPane.showMessageDialog(CustomerGUI.this, scrollPane,
                 "Current Promotions", JOptionPane.INFORMATION_MESSAGE);
         }
     }
