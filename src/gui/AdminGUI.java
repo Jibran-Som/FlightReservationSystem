@@ -10,8 +10,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import model.*;
 
-
-
 public class AdminGUI extends JFrame {
     private String currentUser;
     private JTabbedPane tabbedPane;
@@ -32,8 +30,6 @@ public class AdminGUI extends JFrame {
     private JButton removeUserButton;
 
     // System Management Components
-    private JTextArea systemLogArea;
-    private JButton generateReportButton;
     private JButton viewPromotionsButton;
 
     // Database Manager For Connectivity
@@ -263,35 +259,13 @@ public class AdminGUI extends JFrame {
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        generateReportButton = new JButton("Generate System Report");
         viewPromotionsButton = new JButton("Manage Promotions");
 
-        generateReportButton.addActionListener(new GenerateReportListener());
         viewPromotionsButton.addActionListener(new ViewPromotionsListener());
 
-        buttonPanel.add(generateReportButton);
         buttonPanel.add(viewPromotionsButton);
 
         panel.add(buttonPanel, BorderLayout.NORTH);
-
-        // System log area
-        JPanel logPanel = new JPanel(new BorderLayout());
-        logPanel.setBorder(BorderFactory.createTitledBorder("System Log"));
-
-        systemLogArea = new JTextArea(15, 50);
-        systemLogArea.setEditable(false);
-        systemLogArea.setText("System initialized...\n");
-        systemLogArea.append("Welcome, Administrator " + currentUser + "\n");
-        systemLogArea.append("Current system time: " + java.time.LocalDateTime.now() + "\n");
-
-        JScrollPane scrollPane = new JScrollPane(systemLogArea);
-        logPanel.add(scrollPane, BorderLayout.CENTER);
-
-        JButton clearLogButton = new JButton("Clear Log");
-        clearLogButton.addActionListener(new ClearLogListener());
-        logPanel.add(clearLogButton, BorderLayout.SOUTH);
-
-        panel.add(logPanel, BorderLayout.CENTER);
 
         return panel;
     }
@@ -345,7 +319,6 @@ public class AdminGUI extends JFrame {
         }
     }
 
-
     private class RemoveFlightListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -374,9 +347,6 @@ public class AdminGUI extends JFrame {
 
             if (result >= 1) {
                 flightTableModel.removeRow(selectedRow);
-
-                systemLogArea.append("Deleted flight ID " + flightID +
-                        " at " + java.time.LocalDateTime.now() + "\n");
 
                 JOptionPane.showMessageDialog(AdminGUI.this,
                         "Flight deleted successfully.",
@@ -408,8 +378,6 @@ public class AdminGUI extends JFrame {
     }
 }
 
-
-
     private class RefreshFlightsListener implements ActionListener {
         @Override
             public void actionPerformed(ActionEvent e) {
@@ -431,7 +399,6 @@ public class AdminGUI extends JFrame {
                     };
                     flightTableModel.addRow(row);
                 }
-            systemLogArea.append("Flight list refreshed at: " + java.time.LocalDateTime.now() + "\n");
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -528,9 +495,6 @@ public class AdminGUI extends JFrame {
             if (result >= 1) {
                 userTableModel.removeRow(selectedRow);
 
-                systemLogArea.append("Deleted person ID " + personID +
-                        " at " + java.time.LocalDateTime.now() + "\n");
-
                 JOptionPane.showMessageDialog(AdminGUI.this,
                         "User deleted successfully.",
                         "Flight Removed",
@@ -561,18 +525,6 @@ public class AdminGUI extends JFrame {
         }
     }
 
-    private class GenerateReportListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            systemLogArea.append("System report generated at: " + java.time.LocalDateTime.now() + "\n");
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "System report generated.\n" +
-                "This functionality will create detailed reports when implemented.",
-                "Generate Report",
-                JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
     private class ViewPromotionsListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -581,13 +533,6 @@ public class AdminGUI extends JFrame {
                 "This will include creating and managing monthly promotion news.",
                 "Manage Promotions",
                 JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private class ClearLogListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            systemLogArea.setText("Log cleared at: " + java.time.LocalDateTime.now() + "\n");
         }
     }
 
@@ -827,7 +772,6 @@ public class AdminGUI extends JFrame {
             formPanel.add(roleDropdown);
             roleField = (String) roleDropdown.getSelectedItem();
 
-
             formPanel.add(new JLabel("Email:"));
             emailField = new JTextField();
             formPanel.add(emailField);
@@ -912,9 +856,6 @@ public class AdminGUI extends JFrame {
 
                 userTableModel.addRow(rowData);
 
-                systemLogArea.append("Added new user: " + username + " (ID: " + person_id +
-                    ") at " + java.time.LocalDateTime.now() + "\n");
-
                 JOptionPane.showMessageDialog(this, "User added successfully.");
                 dispose();
 
@@ -927,7 +868,6 @@ public class AdminGUI extends JFrame {
             }
         }
     }
-
 
     private class EditUserDialog extends JDialog {
         private JTextField usernameField, fNameField, lNameField, dobField, emailField, passfield;
@@ -968,8 +908,6 @@ public class AdminGUI extends JFrame {
             dobField = new JTextField(dob.toString());
             formPanel.add(dobField);
 
-
-
             formPanel.add(new JLabel("Current Password:"));
             try {
                 String currentPassword = db.getPasswordForUser((int) personID);
@@ -978,8 +916,6 @@ public class AdminGUI extends JFrame {
                 e.printStackTrace();
             }
             formPanel.add(passfield);
-
-
 
             if(role.equals("Customer")){
                 formPanel.add(new JLabel("Email:"));
@@ -1044,8 +980,6 @@ public class AdminGUI extends JFrame {
                 // Update password if provided
                 if (!newPassword.isEmpty()) {
                     db.updatePasswordDirectly((int)personID, newPassword);
-                    systemLogArea.append("Password updated for user ID " + personID +
-                        " (" + username + ") at " + java.time.LocalDateTime.now() + "\n");
                 }
 
                 // Update table
@@ -1056,9 +990,6 @@ public class AdminGUI extends JFrame {
                 if(this.role.equals("Customer")) {
                     model.setValueAt(email, rowIndex, 6);
                 }
-
-                systemLogArea.append("Updated user details for ID " + personID +
-                    " (" + username + ") at " + java.time.LocalDateTime.now() + "\n");
 
                 JOptionPane.showMessageDialog(this, "User updated successfully.");
                 dispose();

@@ -857,7 +857,7 @@ public class CustomerGUI extends JFrame {
             if (activePromotions.isEmpty()) {
                 promotionsText.append("No active promotions at the moment.\n");
                 promotionsText.append("Check back later for special offers!");
-            } else {
+            } else if (isSubscribed) {
                 for (Promotion promotion : activePromotions) {
                     promotionsText.append("Code: ").append(promotion.getPromoCode()).append("\n");
                     promotionsText.append("Discount: ").append(promotion.getDiscountRate() * 100).append("%\n");
