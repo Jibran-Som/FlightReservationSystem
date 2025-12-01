@@ -1,3 +1,6 @@
+// PaymentStrategy.java
+// Strategy interface for payment methods
+
 package model;
 
 public interface PaymentStrategy {

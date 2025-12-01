@@ -1,3 +1,6 @@
+//CustomDate.java
+// Entity class for custom date representation
+// Provides methods for date manipulation and formatting
 package model;
 
 public class CustomDate {
@@ -5,6 +8,7 @@ public class CustomDate {
     private int month;
     private int year;
 
+    // === Constructors ===
     public CustomDate() {
         this.day = 1;
         this.month = 1;
@@ -18,7 +22,7 @@ public class CustomDate {
     }
 
 
-
+    // === Getters ===
     public int getDay() {
         return day;
     }
@@ -32,7 +36,7 @@ public class CustomDate {
     }
 
 
-
+    // === Setters ===
     public void setDay(int day) {
         this.day = day;
     }
@@ -45,6 +49,8 @@ public class CustomDate {
         this.year = year;
     }
 
+
+    // === Other Methods ===    
     public String toSQLDate() {
         return String.format("%04d-%02d-%02d", year, month, day);
     }

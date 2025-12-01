@@ -1,4 +1,7 @@
 // Person.java
+// Abstract base class for different types of persons in the system
+// Contains common attributes and methods
+
 package model;
 
 public abstract class Person {
@@ -8,6 +11,7 @@ public abstract class Person {
     private String lastName;
     private CustomDate DoB;
 
+    // === Constructors ===
     public Person(String username, String firstName, String lastName, CustomDate DoB) {
         this.username = username;
         this.firstName = firstName;
@@ -23,18 +27,20 @@ public abstract class Person {
         this.DoB = DoB;
     }
 
+    // === Getters ===
     public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
     public int getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public CustomDate getDoB() { return DoB; }
 
+    // === Setters ===
+    public void setUsername(String username) { this.username = username; }
     public void setId(int id) { this.id = id; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setDoB(CustomDate DoB) { this.DoB = DoB; }
 
+    // === Other Methods ===
     public abstract String toString();
 }

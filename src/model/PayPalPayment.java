@@ -1,3 +1,6 @@
+// PayPalPayment.java
+// Concrete implementation of PaymentStrategy for PayPal payments
+
 package model;
 
 
@@ -5,10 +8,12 @@ public class PayPalPayment implements PaymentStrategy {
     private Card card; 
     private static final double SUCCESS_RATE = 0.8;
 
+    // === Constructor ===
     public PayPalPayment(Card card){
         this.card = card; 
     }
 
+    // === Other Methods ===
     @Override
     public String pay(double amount) {
 

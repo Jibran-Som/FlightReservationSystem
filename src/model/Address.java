@@ -1,4 +1,6 @@
 // Address.java
+// Entity class for addresses
+// Represents a physical address with its details
 package model;
 
 public class Address {
@@ -10,6 +12,7 @@ public class Address {
     private String state;
     private String country;
 
+    // === Constructors ===
     public Address() {
         this.postalCode = "";
         this.number = 0;
@@ -38,6 +41,7 @@ public class Address {
         this.country = country;
     }
 
+    // === Getters ===
     public int getAddressID() { return addressID; }
     public String getPostalCode() { return postalCode; }
     public int getNumber() { return number; }
@@ -46,6 +50,7 @@ public class Address {
     public String getState() { return state; }
     public String getCountry() { return country; }
 
+    // === Setters ===
     public void setAddressID(int addressID) { this.addressID = addressID; }
     public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
     public void setNumber(int number) { this.number = number; }
@@ -54,6 +59,7 @@ public class Address {
     public void setState(String state) { this.state = state; }
     public void setCountry(String country) { this.country = country; }
 
+    // === Other Methods ===
     @Override
     public String toString() {
         return number + " " + street + ", " + city + ", " + state + ", " + country;

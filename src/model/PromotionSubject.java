@@ -1,4 +1,5 @@
 // PromotionSubject.java
+// Subject interface for promotion updates
 package model;
 
 public interface PromotionSubject {

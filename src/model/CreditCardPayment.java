@@ -1,3 +1,6 @@
+//CreditCardPayment.java
+// Implements PaymentStrategy using credit card payments --> Concrete Strategy
+
 package model;
 
 public class CreditCardPayment implements PaymentStrategy {
@@ -5,10 +8,12 @@ public class CreditCardPayment implements PaymentStrategy {
     private Card card; 
     private static final double SUCCESS_RATE = 0.9;
 
+    // === Constructors ===
     public CreditCardPayment(Card card){
         this.card = card; 
     }
     
+    // === Other Methods ===
     @Override
     public String pay(double amount) {
 

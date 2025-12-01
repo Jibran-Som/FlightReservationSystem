@@ -1,4 +1,9 @@
 // Customer.java
+// Implements PromotionObserver to receive promotion updates
+// Inherits from Person class
+// Represents a customer in the flight booking system 
+
+
 package model;
 
 public class Customer extends Person implements PromotionObserver {
