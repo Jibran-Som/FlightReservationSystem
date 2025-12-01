@@ -29,8 +29,13 @@ public class AdminGUI extends JFrame {
     private JButton editUserButton;
     private JButton removeUserButton;
 
-    // System Management Components
-    private JButton viewPromotionsButton;
+    // Promotion Management Components
+    private DefaultTableModel promotionTableModel;
+    private JTable promotionTable;
+    private JButton addPromotionButton;
+    private JButton editPromotionButton;
+    private JButton removePromotionButton;
+    private JButton refreshPromotionsButton;
 
     // Database Manager For Connectivity
     private DatabaseManager db = DatabaseManager.getInstance();
@@ -72,8 +77,8 @@ public class AdminGUI extends JFrame {
         // User Management Tab
         tabbedPane.addTab("User Management", createUserManagementPanel());
 
-        // System Management Tab
-        tabbedPane.addTab("System Management", createSystemManagementPanel());
+        // Promotion Management Tab
+        tabbedPane.addTab("Promotion Management", createPromotionManagementPanel());
 
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
@@ -253,19 +258,59 @@ public class AdminGUI extends JFrame {
         return panel;
     }
 
-    private JPanel createSystemManagementPanel() {
+    private JPanel createPromotionManagementPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        viewPromotionsButton = new JButton("Manage Promotions");
+        addPromotionButton = new JButton("Add Promotion");
+        editPromotionButton = new JButton("Edit Promotion");
+        removePromotionButton = new JButton("Remove Promotion");
+        refreshPromotionsButton = new JButton("Refresh");
 
-        viewPromotionsButton.addActionListener(new ViewPromotionsListener());
+        addPromotionButton.addActionListener(new AddPromotionListener());
+        editPromotionButton.addActionListener(new EditPromotionListener());
+        removePromotionButton.addActionListener(new RemovePromotionListener());
+        refreshPromotionsButton.addActionListener(new RefreshPromotionsListener());
 
-        buttonPanel.add(viewPromotionsButton);
+        buttonPanel.add(addPromotionButton);
+        buttonPanel.add(editPromotionButton);
+        buttonPanel.add(removePromotionButton);
+        buttonPanel.add(refreshPromotionsButton);
 
         panel.add(buttonPanel, BorderLayout.NORTH);
+
+        // Promotion table
+        String[] columnNames = {"Promo Code", "Discount Rate", "Description", "Start Date"};
+        Object[][] data = {}; // Empty for now
+        try {
+            ArrayList<Promotion> promotions = db.getAllPromotions();
+            data = new Object[promotions.size()][columnNames.length];
+
+            for (int i = 0; i < promotions.size(); i++) {
+                Promotion p = promotions.get(i);
+                data[i] = new Object[]{
+                    p.getPromoCode(),
+                    p.getDiscountRate() * 100 + "%",
+                    p.getDescription(),
+                    p.getStartDate().toSQLDate()
+                };
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.err.println("Error loading promotions from database.");
+        }
+        
+        promotionTableModel = new DefaultTableModel(data, columnNames){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table non-editable
+            }
+        };
+        promotionTable = new JTable(promotionTableModel);
+        JScrollPane scrollPane = new JScrollPane(promotionTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
@@ -525,14 +570,141 @@ public class AdminGUI extends JFrame {
         }
     }
 
-    private class ViewPromotionsListener implements ActionListener {
+    // Promotion Action Listeners
+    private class AddPromotionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(AdminGUI.this,
-                "Manage Promotions functionality will be implemented later.\n" +
-                "This will include creating and managing monthly promotion news.",
-                "Manage Promotions",
-                JOptionPane.INFORMATION_MESSAGE);
+            AddPromotionDialog dialog = new AddPromotionDialog(AdminGUI.this, promotionTableModel);
+            dialog.setVisible(true);
+        }
+    }
+
+    private class EditPromotionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int selectedRow = promotionTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Please select a promotion to edit.",
+                        "No Selection",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Pass selected row data to the dialog
+            Object promoCode = promotionTableModel.getValueAt(selectedRow, 0);
+            Object discountRateStr = promotionTableModel.getValueAt(selectedRow, 1);
+            Object description = promotionTableModel.getValueAt(selectedRow, 2);
+            Object startDate = promotionTableModel.getValueAt(selectedRow, 3);
+
+            // Parse discount rate (remove % symbol)
+            double discountRate = 0;
+            if (discountRateStr != null) {
+                String rateStr = discountRateStr.toString().replace("%", "");
+                try {
+                    discountRate = Double.parseDouble(rateStr) / 100;
+                } catch (NumberFormatException ex) {
+                    discountRate = 0;
+                }
+            }
+
+            EditPromotionDialog editDialog = new EditPromotionDialog(
+                    AdminGUI.this,
+                    promotionTableModel,
+                    selectedRow,
+                    promoCode,
+                    discountRate,
+                    description,
+                    startDate
+            );
+
+            editDialog.setVisible(true);
+        }
+    }
+
+    private class RemovePromotionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                int selectedRow = promotionTable.getSelectedRow();
+
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(AdminGUI.this,
+                            "Please select a promotion to remove.",
+                            "No Selection",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                String promoCode = (String) promotionTableModel.getValueAt(selectedRow, 0);
+                String discountRate = (String) promotionTableModel.getValueAt(selectedRow, 1);
+                String description = (String) promotionTableModel.getValueAt(selectedRow, 2);
+
+                int confirm = JOptionPane.showConfirmDialog(AdminGUI.this,
+                        "Are you sure you want to delete this promotion?\n\n" +
+                        "Code: " + promoCode + "\n" +
+                        "Discount: " + discountRate + "\n" +
+                        "Description: " + description,
+                        "Confirm Delete",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (confirm != JOptionPane.YES_OPTION) return;
+
+                int result = db.deletePromotion(promoCode);
+
+                if (result >= 1) {
+                    promotionTableModel.removeRow(selectedRow);
+                    JOptionPane.showMessageDialog(AdminGUI.this,
+                            "Promotion deleted successfully.",
+                            "Promotion Removed",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else if (result == 0) {
+                    JOptionPane.showMessageDialog(AdminGUI.this,
+                            "No promotion was deleted. It may not exist.",
+                            "Delete Failed",
+                            JOptionPane.WARNING_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(AdminGUI.this,
+                            "A database error occurred while deleting the promotion.",
+                            "SQL Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "An unexpected error occurred while trying to delete the promotion.\n" +
+                        "Check console/logs for more details.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private class RefreshPromotionsListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            promotionTableModel.setRowCount(0);
+
+            ArrayList<Promotion> promotions;
+            try {
+                promotions = db.getAllPromotions();
+                for (Promotion p : promotions) {
+                    Object[] row = {
+                        p.getPromoCode(),
+                        p.getDiscountRate() * 100 + "%",
+                        p.getDescription(),
+                        p.getStartDate().toSQLDate()
+                    };
+                    promotionTableModel.addRow(row);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(AdminGUI.this,
+                        "Error loading promotions: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -636,6 +808,7 @@ public class AdminGUI extends JFrame {
             }
         }
     }
+    
     private class EditFlightDialog extends JDialog {
         private JTextField airplaneIDField, routeIDField, departureField, arrivalField,
                 seatsField, lengthField, priceField;
@@ -996,6 +1169,198 @@ public class AdminGUI extends JFrame {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
                     "Invalid input. Please check the fields.\nError: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Promotion Dialog Classes
+    private class AddPromotionDialog extends JDialog {
+        private JTextField promoCodeField, discountRateField, descriptionField, startDateField;
+        private DefaultTableModel model;
+
+        public AddPromotionDialog(JFrame parent, DefaultTableModel model) {
+            super(parent, "Add New Promotion", true);
+            this.model = model;
+            setSize(400, 350);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Promo Code:"));
+            promoCodeField = new JTextField();
+            formPanel.add(promoCodeField);
+
+            formPanel.add(new JLabel("Discount Rate (%):"));
+            discountRateField = new JTextField();
+            formPanel.add(discountRateField);
+
+            formPanel.add(new JLabel("Description:"));
+            descriptionField = new JTextField();
+            formPanel.add(descriptionField);
+
+            formPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
+            startDateField = new JTextField();
+            formPanel.add(startDateField);
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton saveButton = new JButton("Save Promotion");
+            saveButton.addActionListener(e -> savePromotion());
+            add(saveButton, BorderLayout.SOUTH);
+        }
+
+        private void savePromotion() {
+            try {
+                String promoCode = promoCodeField.getText().trim();
+                String discountRateStr = discountRateField.getText().trim();
+                String description = descriptionField.getText().trim();
+                String startDateStr = startDateField.getText().trim();
+
+                // Validation
+                if (promoCode.isEmpty() || discountRateStr.isEmpty() || description.isEmpty() || startDateStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                        "Please fill in all fields.",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                double discountRate = Double.parseDouble(discountRateStr);
+                if (discountRate <= 0 || discountRate > 100) {
+                    JOptionPane.showMessageDialog(this,
+                        "Discount rate must be between 0.01% and 100%.",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                CustomDate startDate = CustomDate.StringToDate(startDateStr);
+
+                // Insert into database
+                db.insertPromotion(promoCode, discountRate / 100, description, startDate);
+
+                // Add to table
+                Object[] rowData = {
+                    promoCode,
+                    discountRate + "%",
+                    description,
+                    startDateStr
+                };
+                model.addRow(rowData);
+
+                JOptionPane.showMessageDialog(this, "Promotion added successfully.");
+                dispose();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Invalid discount rate. Please enter a valid number.",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error adding promotion: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private class EditPromotionDialog extends JDialog {
+        private JTextField promoCodeField, discountRateField, descriptionField, startDateField;
+        private DefaultTableModel model;
+        private int rowIndex;
+        private Object originalPromoCode;
+
+        public EditPromotionDialog(JFrame parent, DefaultTableModel model, int rowIndex,
+                                  Object promoCode, Object discountRate, Object description, Object startDate) {
+            super(parent, "Edit Promotion", true);
+            this.model = model;
+            this.rowIndex = rowIndex;
+            this.originalPromoCode = promoCode;
+
+            setSize(400, 350);
+            setLocationRelativeTo(parent);
+            setLayout(new BorderLayout());
+
+            JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+            formPanel.add(new JLabel("Promo Code:"));
+            promoCodeField = new JTextField(promoCode.toString());
+            formPanel.add(promoCodeField);
+
+            formPanel.add(new JLabel("Discount Rate (%):"));
+            discountRateField = new JTextField(String.valueOf((double)discountRate * 100));
+            formPanel.add(discountRateField);
+
+            formPanel.add(new JLabel("Description:"));
+            descriptionField = new JTextField(description.toString());
+            formPanel.add(descriptionField);
+
+            formPanel.add(new JLabel("Start Date (YYYY-MM-DD):"));
+            startDateField = new JTextField(startDate.toString());
+            formPanel.add(startDateField);
+
+            add(formPanel, BorderLayout.CENTER);
+
+            JButton updateButton = new JButton("Update Promotion");
+            updateButton.addActionListener(e -> updatePromotion());
+            add(updateButton, BorderLayout.SOUTH);
+        }
+
+        private void updatePromotion() {
+            try {
+                String promoCode = promoCodeField.getText().trim();
+                String discountRateStr = discountRateField.getText().trim();
+                String description = descriptionField.getText().trim();
+                String startDateStr = startDateField.getText().trim();
+
+                // Validation
+                if (promoCode.isEmpty() || discountRateStr.isEmpty() || description.isEmpty() || startDateStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                        "Please fill in all fields.",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                double discountRate = Double.parseDouble(discountRateStr);
+                if (discountRate <= 0 || discountRate > 100) {
+                    JOptionPane.showMessageDialog(this,
+                        "Discount rate must be between 0.01% and 100%.",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                CustomDate startDate = CustomDate.StringToDate(startDateStr);
+
+                // Update in database
+                db.updatePromotion(originalPromoCode.toString(), (int)discountRate, description, startDate);
+
+                // Update table
+                model.setValueAt(promoCode, rowIndex, 0);
+                model.setValueAt(discountRate + "%", rowIndex, 1);
+                model.setValueAt(description, rowIndex, 2);
+                model.setValueAt(startDateStr, rowIndex, 3);
+
+                JOptionPane.showMessageDialog(this, "Promotion updated successfully.");
+                dispose();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Invalid discount rate. Please enter a valid number.",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error updating promotion: " + ex.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();

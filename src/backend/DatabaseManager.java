@@ -162,14 +162,9 @@ public class DatabaseManager {
         return insert("route", columns, values, true);
     }
 
-    public void insertPromotion(String promoCode, double discountRate, String description, CustomDate startDate, CustomDate endDate) throws SQLException {
-    String[] columns = {"promo_code", "discount_rate", "description", "start_date", "end_date"};
-    Object[] values = {promoCode, discountRate, description, startDate.toSQLDate(), endDate.toSQLDate()};
-    insert("promotion", columns, values, false);
-    }
 
     // INSERT METHODS FOR PROMOTIONS
-    public void insertPromotion(String promoCode, int discountRate, String description, CustomDate startDate) throws SQLException {
+    public void insertPromotion(String promoCode, double discountRate, String description, CustomDate startDate) throws SQLException {
         String[] columns = {"promo_code", "discount_rate", "description", "start_date"};
         java.sql.Date sqlStartDate = java.sql.Date.valueOf(startDate.toSQLDate());
         Object[] values = {promoCode, discountRate, description, sqlStartDate};
