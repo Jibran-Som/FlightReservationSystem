@@ -786,9 +786,10 @@ public class AdminGUI extends JFrame {
 
     private class AddUserDialog extends JDialog {
         private JTextField usernameField, fNameField, lNameField, dobField,
-            roleField, emailField;
+            emailField;
         private JPasswordField passwordField;  // Add password field
         private DefaultTableModel model;
+        private String roleField;
 
         public AddUserDialog(JFrame parent, DefaultTableModel model) {
             super(parent, "Add New User", true);
@@ -821,8 +822,11 @@ public class AdminGUI extends JFrame {
             formPanel.add(passwordField);
 
             formPanel.add(new JLabel("Role:"));
-            roleField = new JTextField();
-            formPanel.add(roleField);
+            String[] roles = {"Admin", "FlightAgent", "Customer"};
+            JComboBox<String> roleDropdown = new JComboBox<>(roles);
+            formPanel.add(roleDropdown);
+            roleField = (String) roleDropdown.getSelectedItem();
+
 
             formPanel.add(new JLabel("Email:"));
             emailField = new JTextField();
@@ -841,7 +845,7 @@ public class AdminGUI extends JFrame {
                 String fname = fNameField.getText();
                 String lname = lNameField.getText();
                 String dob = dobField.getText();
-                String role = roleField.getText();
+                String role = roleField;
                 String email = emailField.getText();
                 String password = new String(passwordField.getPassword());
 
